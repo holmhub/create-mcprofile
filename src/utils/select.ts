@@ -64,6 +64,9 @@ export async function selectFromList(
 			if (process.stdin.isTTY) {
 				process.stdin.setRawMode(false);
 			}
+			clearLastRender();
+			process.stdout.moveCursor(0, -1);
+			process.stdout.write(`${title}: ${items[selectedIndex]}\n`);
 		};
 
 		process.stdin.on('keypress', keypressHandler);
