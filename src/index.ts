@@ -78,16 +78,16 @@ async function main(): Promise<void> {
 			mkdirSync(join(PROFILES_PATH, selectedProfile), { recursive: true });
 		}
 
-		console.log(`\nSelected profile: ${selectedProfile}`);
-
 		// Get available versions
-		console.log('\nAvailable versions:');
-		console.log('1. Release');
-		console.log('2. Snapshot');
-		const versionType = await askQuestion('Select version type (1/2): ');
+		const versionTypes = ['Release', 'Snapshot'];
+		const versionTypeIndex = await selectFromList(
+			versionTypes,
+			'Select version type',
+		);
+		const isSnapshot = versionTypeIndex === 1;
 
 		// Fetch and display versions
-		const versions = await getVersions(versionType === '2');
+		const versions = await getVersions(isSnapshot);
 		await displayVersions(versions);
 
 		// Get version selection
