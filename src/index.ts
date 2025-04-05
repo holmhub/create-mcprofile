@@ -45,8 +45,10 @@ function getProfiles(): string[] {
 
 async function main(): Promise<void> {
 	try {
-		// Get username
-		const username = await askQuestion('Enter username: ');
+		// Get username with default
+		const defaultUsername = process.env.USERNAME || 'Player';
+		const usernameInput = await askQuestion(`Enter username (press Enter for ${defaultUsername}): `);
+		const username = usernameInput.trim() || defaultUsername;
 
 		// Get available profiles
 		console.log('\nAvailable profiles:');
