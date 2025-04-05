@@ -6,6 +6,7 @@ import {
 	Client,
 	type ILauncherOptions,
 } from 'minecraft-launcher-core';
+import { selectFromList } from './utils/select';
 import { displayVersions, getVersions } from './versions';
 
 const launcher = new Client();
@@ -47,30 +48,28 @@ async function main(): Promise<void> {
 	try {
 		// Get username with default
 		const defaultUsername = process.env.USERNAME || 'Player';
-		const usernameInput = await askQuestion(`Enter username (press Enter for ${defaultUsername}): `);
+		const usernameInput = await askQuestion(
+			`Enter username (press Enter for ${defaultUsername}): `,
+		);
 		const username = usernameInput.trim() || defaultUsername;
 
 		// Get available profiles
-		console.log('\nAvailable profiles:');
 		const profiles = getProfiles();
-
 		let selectedProfile: string;
-		if (profiles.length > 0) {
-			profiles.forEach((profile, index) => {
-				console.log(`${index + 1}. ${profile}`);
-			});
-			console.log(`${profiles.length + 1}. Create new profile`);
 
-			const profileChoice = Number.parseInt(
-				await askQuestion('Select profile number: '),
-			);
-			if (profileChoice === profiles.length + 1) {
+		if (profiles.length > 0) {
+			const allOptions = [...profiles, 'Create new profile'];
+			const selectedIndex = await selectFromList(allOptions, 'Select profile');
+
+			if (selectedIndex === profiles.length) {
 				selectedProfile = await askQuestion('Enter new profile name: ');
 				mkdirSync(join(PROFILES_PATH, selectedProfile), { recursive: true });
-			} else if (profileChoice > 0 && profileChoice <= profiles.length) {
-				selectedProfile = profiles[profileChoice - 1] || '';
 			} else {
-				throw new Error('Invalid profile selected');
+				const profile = profiles[selectedIndex];
+				if (!profile) {
+					throw new Error('Invalid profile selected');
+				}
+				selectedProfile = profile;
 			}
 		} else {
 			selectedProfile = await askQuestion(

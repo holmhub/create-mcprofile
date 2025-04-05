@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun --hot .",
+    "dev": "bun .",
     "build": "rm -rf dist && bun build --target=bun --minify --sourcemap=none --outdir=dist ./src/index.ts",
     "start": "bun run dist/index.js",
     "compile": "bun build --compile --minify --sourcemap --bytecode . --outfile dist/myapp",
