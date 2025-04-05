@@ -90,16 +90,18 @@ async function main(): Promise<void> {
         const opts: ILauncherOptions = {
             clientPackage: undefined,
             authorization: Authenticator.getAuth(username),
-            root: join(process.env.APPDATA  || '', '.minecraft'),
+            root: join(process.env.APPDATA || '', '.minecraft'),
             version: {
                 number: selectedVersion.id,
-                type: selectedVersion.type
+                type: selectedVersion.type,
+                custom: "fabric-loader-0.16.12-1.20.1"
             },
             memory: {
                 max: "4G",
                 min: "2G"
             },
             overrides: {
+                maxSockets: 4,
                 gameDirectory: join(PROFILES_PATH, selectedProfile)
             }
         };
@@ -110,8 +112,8 @@ async function main(): Promise<void> {
             clientPackage: undefined
         });
 
-        launcher.on('debug', (e: any) => console.log(e));
-        launcher.on('data', (e: any) => console.log(e));
+        launcher.on('debug', console.log);
+        launcher.on('data', console.log);
         launcher.on('progress', (e: { type: string; task: string; total: number }) => {
             console.log(`Download progress: ${e.type} | ${e.task} | ${e.total}`);
         });
