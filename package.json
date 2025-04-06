@@ -1,8 +1,8 @@
 {
   "name": "mclauncher",
   "module": "src/index.ts",
-  "type": "module",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "bun .",
     "build": "rm -rf dist && bun build --target=bun --minify --sourcemap=none --outdir=dist ./src/index.ts",
@@ -14,12 +14,11 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "@types/bun": "latest"
+    "@types/bun": "^1.2.8",
+    "@types/checksum": "^0.1.35",
+    "checksum": "^1.0.0"
   },
   "peerDependencies": {
     "typescript": "^5"
-  },
-  "dependencies": {
-    "minecraft-launcher-core": "^3.18.2"
   }
 }

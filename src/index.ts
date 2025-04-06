@@ -7,16 +7,10 @@ import {
 } from 'node:fs';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
-import {
-	Authenticator,
-	Client,
-	type ILauncherOptions,
-} from 'minecraft-launcher-core';
+import { getAuth, launch } from './client';
 import { getFromInput } from './utils/input';
 import { selectFromList } from './utils/select';
 import { selectVersion } from './utils/versions';
-
-const launcher = new Client();
 
 const rl = createInterface({
 	input: process.stdin,
@@ -143,9 +137,11 @@ async function main(): Promise<void> {
 			);
 		}
 
-		const opts: ILauncherOptions = {
+		console.log('Launching Minecraft...');
+
+		const launcher = await launch({
 			clientPackage: undefined,
-			authorization: Authenticator.getAuth(username),
+			authorization: getAuth(username),
 			root: MC_PATH,
 			version: {
 				number: profileConfig.version.id as string,
@@ -162,12 +158,6 @@ async function main(): Promise<void> {
 				maxSockets: 4,
 				gameDirectory: join(PROFILES_PATH, selectedProfile),
 			},
-		};
-
-		console.log('Launching Minecraft...');
-		launcher.launch({
-			...opts,
-			clientPackage: undefined,
 		});
 
 		launcher.on('debug', console.log);
@@ -184,4 +174,3 @@ async function main(): Promise<void> {
 }
 
 main().finally(() => rl.close());
-// Remove this incorrect function at the bottom
