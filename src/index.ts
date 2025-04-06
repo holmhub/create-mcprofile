@@ -6,8 +6,9 @@ import {
 	Client,
 	type ILauncherOptions,
 } from 'minecraft-launcher-core';
+import { getFromInput } from './utils/input';
 import { selectFromList } from './utils/select';
-import { displayVersions, getVersions } from './versions';
+import { selectVersion } from './utils/versions';
 
 const launcher = new Client();
 
@@ -15,10 +16,6 @@ const rl = createInterface({
 	input: process.stdin,
 	output: process.stdout,
 });
-
-async function askQuestion(query: string): Promise<string> {
-	return new Promise((resolve) => rl.question(query, resolve));
-}
 
 const PROFILES_PATH = join(
 	process.env.APPDATA || '',
@@ -48,8 +45,9 @@ async function main(): Promise<void> {
 	try {
 		// Get username with default
 		const defaultUsername = process.env.USERNAME || 'Player';
-		const usernameInput = await askQuestion(
+		const usernameInput = await getFromInput(
 			`Enter username (press Enter for ${defaultUsername}): `,
+			rl,
 		);
 		const username = usernameInput.trim() || defaultUsername;
 
@@ -62,7 +60,7 @@ async function main(): Promise<void> {
 			const selectedIndex = await selectFromList(allOptions, 'Select profile');
 
 			if (selectedIndex === profiles.length) {
-				selectedProfile = await askQuestion('Enter new profile name: ');
+				selectedProfile = await getFromInput('Enter new profile name: ', rl);
 				mkdirSync(join(PROFILES_PATH, selectedProfile), { recursive: true });
 			} else {
 				const profile = profiles[selectedIndex];
@@ -72,8 +70,9 @@ async function main(): Promise<void> {
 				selectedProfile = profile;
 			}
 		} else {
-			selectedProfile = await askQuestion(
+			selectedProfile = await getFromInput(
 				'No profiles found. Enter new profile name: ',
+				rl,
 			);
 			mkdirSync(join(PROFILES_PATH, selectedProfile), { recursive: true });
 		}
@@ -86,20 +85,17 @@ async function main(): Promise<void> {
 		);
 		const isSnapshot = versionTypeIndex === 1;
 
-		// Fetch and display versions
-		const versions = await getVersions(isSnapshot);
-		await displayVersions(versions);
-
 		// Get version selection
-		const versionChoice =
-			Number.parseInt(await askQuestion('Select version number: ')) - 1;
-		const selectedVersion = versions[versionChoice];
+		const selectedVersion = await selectVersion(
+			isSnapshot,
+			'Select version',
+			rl,
+		);
 
-		if (!selectedVersion) {
-			throw new Error('Invalid version selected');
-		}
-
-		console.log(`\nSelected version: ${selectedVersion.id}`);
+		const asd = await getFromInput(
+			`Enter username (press Enter for ${defaultUsername}): `,
+			rl,
+		);
 
 		const opts: ILauncherOptions = {
 			clientPackage: undefined,
