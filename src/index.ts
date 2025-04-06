@@ -1,4 +1,10 @@
-import { existsSync, mkdirSync, readdirSync } from 'node:fs';
+import {
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	readdirSync,
+	writeFileSync,
+} from 'node:fs';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import {
@@ -55,6 +61,10 @@ async function main(): Promise<void> {
 		// Get available profiles
 		const profiles = getFolders(PROFILES_PATH);
 		let selectedProfile: string;
+		let profileConfig: {
+			version: { id?: string; type?: string; modLoader?: string };
+			memory: { max: string; min: string };
+		} = { version: {}, memory: { max: '4G', min: '2G' } };
 
 		if (profiles.length > 0) {
 			const allOptions = [...profiles, 'Create new profile'];
@@ -78,49 +88,71 @@ async function main(): Promise<void> {
 			mkdirSync(join(PROFILES_PATH, selectedProfile), { recursive: true });
 		}
 
-		// Get available mod loaders
-		const modLoaders = getFolders(join(MC_PATH, 'versions'));
-		let selectedModLoader: string | undefined;
+		const configPath = join(
+			PROFILES_PATH,
+			selectedProfile,
+			`${selectedProfile}.json`,
+		);
+		if (existsSync(configPath)) {
+			profileConfig = JSON.parse(readFileSync(configPath, 'utf-8'));
+			console.log(`Loaded configuration for profile: ${selectedProfile}`);
+		} else {
+			// Get available mod loaders
+			const modLoaders = getFolders(join(MC_PATH, 'versions'));
+			let selectedModLoader: string | undefined;
 
-		if (modLoaders.length > 0) {
-			const allOptions = [...modLoaders, 'Vanilla'];
-			const selectedIndex = await selectFromList(
-				allOptions,
-				'Select mod loader',
+			if (modLoaders.length > 0) {
+				const allOptions = [...modLoaders, 'Vanilla'];
+				const selectedIndex = await selectFromList(
+					allOptions,
+					'Select mod loader',
+				);
+
+				if (selectedIndex !== modLoaders.length) {
+					const modLoader = modLoaders[selectedIndex];
+					if (!modLoader) {
+						throw new Error('Invalid modloader selected');
+					}
+					selectedModLoader = modLoader;
+				}
+			}
+
+			// Get available versions
+			const versionTypes = ['Release', 'Snapshot'];
+			const versionTypeIndex = await selectFromList(
+				versionTypes,
+				'Select version type',
+			);
+			const isSnapshot = versionTypeIndex === 1;
+
+			// Get version selection
+			const selectedVersion = await selectVersion(
+				isSnapshot,
+				'Select version',
+				rl,
 			);
 
-			if (selectedIndex !== modLoaders.length) {
-				const modLoader = modLoaders[selectedIndex];
-				if (!modLoader) {
-					throw new Error('Invalid modloader selected');
-				}
-				selectedModLoader = modLoader;
-			}
+			profileConfig.version.id = selectedVersion.id;
+			profileConfig.version.type = selectedVersion.type;
+			profileConfig.version.modLoader = selectedModLoader;
+
+			// Save profile configuration
+			writeFileSync(
+				join(PROFILES_PATH, selectedProfile, `${selectedProfile}.json`),
+				JSON.stringify(profileConfig, null, 2),
+			);
 		}
-
-		// Get available versions
-		const versionTypes = ['Release', 'Snapshot'];
-		const versionTypeIndex = await selectFromList(
-			versionTypes,
-			'Select version type',
-		);
-		const isSnapshot = versionTypeIndex === 1;
-
-		// Get version selection
-		const selectedVersion = await selectVersion(
-			isSnapshot,
-			'Select version',
-			rl,
-		);
 
 		const opts: ILauncherOptions = {
 			clientPackage: undefined,
 			authorization: Authenticator.getAuth(username),
 			root: MC_PATH,
 			version: {
-				number: selectedVersion.id,
-				type: selectedVersion.type,
-				...(selectedModLoader && { custom: selectedModLoader }),
+				number: profileConfig.version.id as string,
+				type: profileConfig.version.type as string,
+				...(profileConfig.version.modLoader && {
+					custom: profileConfig.version.modLoader,
+				}),
 			},
 			memory: {
 				max: '4G',
@@ -152,3 +184,4 @@ async function main(): Promise<void> {
 }
 
 main().finally(() => rl.close());
+// Remove this incorrect function at the bottom
