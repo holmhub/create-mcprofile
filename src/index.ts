@@ -17,26 +17,27 @@ const rl = createInterface({
 	output: process.stdout,
 });
 
+const MC_PATH = join(process.env.APPDATA || '', '.minecraft');
 const PROFILES_PATH = join(
 	process.env.APPDATA || '',
 	'ModrinthApp',
 	'profiles',
 );
 
-function getProfiles(): string[] {
+function getFolders(folder: string): string[] {
 	try {
 		// Create profiles directory if it doesn't exist
-		if (!existsSync(PROFILES_PATH)) {
-			mkdirSync(PROFILES_PATH, { recursive: true });
+		if (!existsSync(folder)) {
+			mkdirSync(folder, { recursive: true });
 			return [];
 		}
 
 		// Read and return directory names
-		return readdirSync(PROFILES_PATH, { withFileTypes: true })
+		return readdirSync(folder, { withFileTypes: true })
 			.filter((dirent) => dirent.isDirectory())
 			.map((dirent) => dirent.name);
 	} catch (error) {
-		console.error('Error reading profiles:', error);
+		console.error('Error reading folder:', error);
 		return [];
 	}
 }
@@ -52,7 +53,7 @@ async function main(): Promise<void> {
 		const username = usernameInput.trim() || defaultUsername;
 
 		// Get available profiles
-		const profiles = getProfiles();
+		const profiles = getFolders(PROFILES_PATH);
 		let selectedProfile: string;
 
 		if (profiles.length > 0) {
@@ -77,6 +78,26 @@ async function main(): Promise<void> {
 			mkdirSync(join(PROFILES_PATH, selectedProfile), { recursive: true });
 		}
 
+		// Get available mod loaders
+		const modLoaders = getFolders(join(MC_PATH, 'versions'));
+		let selectedModLoader: string | undefined;
+
+		if (modLoaders.length > 0) {
+			const allOptions = [...modLoaders, 'Vanilla'];
+			const selectedIndex = await selectFromList(
+				allOptions,
+				'Select mod loader',
+			);
+
+			if (selectedIndex !== modLoaders.length) {
+				const modLoader = modLoaders[selectedIndex];
+				if (!modLoader) {
+					throw new Error('Invalid modloader selected');
+				}
+				selectedModLoader = modLoader;
+			}
+		}
+
 		// Get available versions
 		const versionTypes = ['Release', 'Snapshot'];
 		const versionTypeIndex = await selectFromList(
@@ -92,19 +113,14 @@ async function main(): Promise<void> {
 			rl,
 		);
 
-		const asd = await getFromInput(
-			`Enter username (press Enter for ${defaultUsername}): `,
-			rl,
-		);
-
 		const opts: ILauncherOptions = {
 			clientPackage: undefined,
 			authorization: Authenticator.getAuth(username),
-			root: join(process.env.APPDATA || '', '.minecraft'),
+			root: MC_PATH,
 			version: {
 				number: selectedVersion.id,
 				type: selectedVersion.type,
-				custom: 'fabric-loader-0.16.12-1.20.1',
+				...(selectedModLoader && { custom: selectedModLoader }),
 			},
 			memory: {
 				max: '4G',
