@@ -46,135 +46,123 @@ function getFolders(folder: string): string[] {
 }
 
 async function main(): Promise<void> {
-	try {
-		// Get username with default
-		const defaultUsername = process.env.USERNAME || 'Player';
-		const usernameInput = await getFromInput(
-			`Enter username (press Enter for ${defaultUsername}): `,
+	// Get username with default
+	const defaultUsername = process.env.USERNAME || 'Player';
+	const usernameInput = await getFromInput(
+		`Enter username (press Enter for ${defaultUsername}): `,
+		rl,
+	);
+	const username = usernameInput.trim() || defaultUsername;
+
+	// Get available profiles
+	const profiles = getFolders(PROFILES_PATH);
+	let selectedProfile: string;
+	let profileConfig: {
+		version: { id?: string; type?: string; modLoader?: string };
+		memory: { max: string; min: string };
+	} = { version: {}, memory: { max: '4G', min: '2G' } };
+
+	if (profiles.length > 0) {
+		const allOptions = [...profiles, 'Create new profile'];
+		const selectedIndex = await selectFromList(allOptions, 'Select profile');
+
+		if (selectedIndex === profiles.length) {
+			selectedProfile = await getFromInput('Enter new profile name: ', rl);
+			mkdirSync(join(PROFILES_PATH, selectedProfile), { recursive: true });
+		} else {
+			const profile = profiles[selectedIndex];
+			if (!profile) {
+				throw new Error('Invalid profile selected');
+			}
+			selectedProfile = profile;
+		}
+	} else {
+		selectedProfile = await getFromInput(
+			'No profiles found. Enter new profile name: ',
 			rl,
 		);
-		const username = usernameInput.trim() || defaultUsername;
-
-		// Get available profiles
-		const profiles = getFolders(PROFILES_PATH);
-		let selectedProfile: string;
-		let profileConfig: {
-			version: { id?: string; type?: string; modLoader?: string };
-			memory: { max: string; min: string };
-		} = { version: {}, memory: { max: '4G', min: '2G' } };
-
-		if (profiles.length > 0) {
-			const allOptions = [...profiles, 'Create new profile'];
-			const selectedIndex = await selectFromList(allOptions, 'Select profile');
-
-			if (selectedIndex === profiles.length) {
-				selectedProfile = await getFromInput('Enter new profile name: ', rl);
-				mkdirSync(join(PROFILES_PATH, selectedProfile), { recursive: true });
-			} else {
-				const profile = profiles[selectedIndex];
-				if (!profile) {
-					throw new Error('Invalid profile selected');
-				}
-				selectedProfile = profile;
-			}
-		} else {
-			selectedProfile = await getFromInput(
-				'No profiles found. Enter new profile name: ',
-				rl,
-			);
-			mkdirSync(join(PROFILES_PATH, selectedProfile), { recursive: true });
-		}
-
-		const configPath = join(
-			PROFILES_PATH,
-			selectedProfile,
-			`${selectedProfile}.json`,
-		);
-		if (existsSync(configPath)) {
-			profileConfig = JSON.parse(readFileSync(configPath, 'utf-8'));
-			console.log(`Loaded configuration for profile: ${selectedProfile}`);
-		} else {
-			// Get available mod loaders
-			const modLoaders = getFolders(join(MC_PATH, 'versions'));
-			let selectedModLoader: string | undefined;
-
-			if (modLoaders.length > 0) {
-				const allOptions = [...modLoaders, 'Vanilla'];
-				const selectedIndex = await selectFromList(
-					allOptions,
-					'Select mod loader',
-				);
-
-				if (selectedIndex !== modLoaders.length) {
-					const modLoader = modLoaders[selectedIndex];
-					if (!modLoader) {
-						throw new Error('Invalid modloader selected');
-					}
-					selectedModLoader = modLoader;
-				}
-			}
-
-			// Get available versions
-			const versionTypes = ['Release', 'Snapshot'];
-			const versionTypeIndex = await selectFromList(
-				versionTypes,
-				'Select version type',
-			);
-			const isSnapshot = versionTypeIndex === 1;
-
-			// Get version selection
-			const selectedVersion = await selectVersion(
-				isSnapshot,
-				'Select version',
-				rl,
-			);
-
-			profileConfig.version.id = selectedVersion.id;
-			profileConfig.version.type = selectedVersion.type;
-			profileConfig.version.modLoader = selectedModLoader;
-
-			// Save profile configuration
-			writeFileSync(
-				join(PROFILES_PATH, selectedProfile, `${selectedProfile}.json`),
-				JSON.stringify(profileConfig, null, 2),
-			);
-		}
-
-		const launcher = launch({
-			clientPackage: undefined,
-			authorization: getAuth(username),
-			root: MC_PATH,
-			version: {
-				number: profileConfig.version.id as string,
-				type: profileConfig.version.type as string,
-				...(profileConfig.version.modLoader && {
-					custom: profileConfig.version.modLoader,
-				}),
-			},
-			memory: {
-				max: '4G',
-				min: '2G',
-			},
-			overrides: {
-				maxSockets: 4,
-				gameDirectory: join(PROFILES_PATH, selectedProfile),
-			},
-		});
-
-		launcher.on('debug', console.log);
-		launcher.on('data', console.log);
-		// launcher.on(
-		// 	'progress',
-
-		// 	(e: { type: string; task: string; total: number }) => {
-		// 		console.log(`Download progress: ${e.type} | ${e.task} | ${e.total}`);
-		// 	},
-		// );
-
-		launcher.on('progress', handleProgress);
-	} catch (error) {
-		console.error('Error launching Minecraft:', error);
+		mkdirSync(join(PROFILES_PATH, selectedProfile), { recursive: true });
 	}
+
+	const configPath = join(
+		PROFILES_PATH,
+		selectedProfile,
+		`${selectedProfile}.json`,
+	);
+	if (existsSync(configPath)) {
+		profileConfig = JSON.parse(readFileSync(configPath, 'utf-8'));
+		console.log(`Loaded configuration for profile: ${selectedProfile}`);
+	} else {
+		// Get available mod loaders
+		const modLoaders = getFolders(join(MC_PATH, 'versions'));
+		let selectedModLoader: string | undefined;
+
+		if (modLoaders.length > 0) {
+			const allOptions = [...modLoaders, 'Vanilla'];
+			const selectedIndex = await selectFromList(
+				allOptions,
+				'Select mod loader',
+			);
+
+			if (selectedIndex !== modLoaders.length) {
+				const modLoader = modLoaders[selectedIndex];
+				if (!modLoader) {
+					throw new Error('Invalid modloader selected');
+				}
+				selectedModLoader = modLoader;
+			}
+		}
+
+		// Get available versions
+		const versionTypes = ['Release', 'Snapshot'];
+		const versionTypeIndex = await selectFromList(
+			versionTypes,
+			'Select version type',
+		);
+		const isSnapshot = versionTypeIndex === 1;
+
+		// Get version selection
+		const selectedVersion = await selectVersion(
+			isSnapshot,
+			'Select version',
+			rl,
+		);
+
+		profileConfig.version.id = selectedVersion.id;
+		profileConfig.version.type = selectedVersion.type;
+		profileConfig.version.modLoader = selectedModLoader;
+
+		// Save profile configuration
+		writeFileSync(
+			join(PROFILES_PATH, selectedProfile, `${selectedProfile}.json`),
+			JSON.stringify(profileConfig, null, 2),
+		);
+	}
+
+	const launcher = launch({
+		clientPackage: undefined,
+		authorization: getAuth(username),
+		root: MC_PATH,
+		version: {
+			number: profileConfig.version.id as string,
+			type: profileConfig.version.type as string,
+			...(profileConfig.version.modLoader && {
+				custom: profileConfig.version.modLoader,
+			}),
+		},
+		memory: {
+			max: '4G',
+			min: '2G',
+		},
+		overrides: {
+			maxSockets: 4,
+			gameDirectory: join(PROFILES_PATH, selectedProfile),
+		},
+	});
+
+	launcher.on('debug', console.log);
+	launcher.on('data', console.log);
+	launcher.on('progress', handleProgress);
 }
 
 main().finally(() => rl.close());

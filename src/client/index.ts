@@ -181,7 +181,7 @@ async function init(options: ILauncherOptions) {
 	const launchArguments = args.concat(jvm, classPaths, launchOptions);
 	client.emit('arguments', launchArguments);
 
-	// return startMinecraft(launchArguments, options);
+	return startMinecraft(launchArguments, options);
 }
 
 async function extractPackage(options: ILauncherOptions): Promise<void> {
@@ -276,11 +276,6 @@ async function downloadAsync(
 
 		return { failed: false, asset: null };
 	} catch (error) {
-		client.emit(
-			'debug',
-			`Failed to download asset to ${join(directory, name)} due to\n${error}. Retrying... ${retry}`,
-		);
-
 		if (existsSync(join(directory, name))) {
 			unlinkSync(join(directory, name));
 		}
@@ -1006,7 +1001,7 @@ async function getLaunchOptions(
 		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 		(value: any) => typeof value === 'string' || typeof value === 'number',
 	);
-	client.emit('debug', 'Set launch options');
+	client.emit('debug', '🚀 Launching Minecraft...');
 	return args;
 }
 
