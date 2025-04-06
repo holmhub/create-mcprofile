@@ -33,7 +33,12 @@ let counter = 0;
 
 const client = new EventEmitter();
 
-export async function launch(options: ILauncherOptions): Promise<EventEmitter> {
+export function launch(options: ILauncherOptions): EventEmitter {
+	init(options);
+	return client;
+}
+
+async function init(options: ILauncherOptions) {
 	options.root = resolve(options.root);
 	options.overrides = {
 		detached: true,
@@ -50,10 +55,7 @@ export async function launch(options: ILauncherOptions): Promise<EventEmitter> {
 
 	const java = await checkJava(options.javaPath || 'java');
 	if (!java.run) {
-		client.emit(
-			'debug',
-			`[MCLC]: Couldn't start Minecraft due to: ${java.message}`,
-		);
+		client.emit('debug', `Couldn't start Minecraft due to: ${java.message}`);
 		client.emit('close', 1);
 	}
 
@@ -87,10 +89,7 @@ export async function launch(options: ILauncherOptions): Promise<EventEmitter> {
 	const nativePath = await getNatives(options, versionFile);
 
 	if (!existsSync(mcPath)) {
-		client.emit(
-			'debug',
-			'[MCLC]: Attempting to download Minecraft version jar',
-		);
+		client.emit('debug', 'Attempting to download Minecraft version jar');
 		await getJar(options, versionFile);
 	}
 
@@ -150,8 +149,6 @@ export async function launch(options: ILauncherOptions): Promise<EventEmitter> {
 				jvm.push('-Dlog4j.configurationFile=log4j2_17-111.xml');
 			}
 		}
-
-		return client;
 	}
 
 	const classes =
@@ -160,7 +157,6 @@ export async function launch(options: ILauncherOptions): Promise<EventEmitter> {
 
 	const classPaths = ['-cp'];
 	const separator = getOS() === 'windows' ? ';' : ':';
-	client.emit('debug', `[MCLC]: Using ${separator} to separate class paths`);
 	// Handling launch arguments.
 	const file = modifyJson || versionFile;
 	// So mods like fabric work.
@@ -172,7 +168,7 @@ export async function launch(options: ILauncherOptions): Promise<EventEmitter> {
 	);
 	classPaths.push(file.mainClass);
 
-	client.emit('debug', '[MCLC]: Attempting to download assets');
+	client.emit('debug', 'Attempting to download assets');
 	await getAssets(options, versionFile);
 
 	// Forge -> Custom -> Vanilla
@@ -184,18 +180,14 @@ export async function launch(options: ILauncherOptions): Promise<EventEmitter> {
 
 	const launchArguments = args.concat(jvm, classPaths, launchOptions);
 	client.emit('arguments', launchArguments);
-	client.emit(
-		'debug',
-		`[MCLC]: Launching with arguments ${launchArguments.join(' ')}`,
-	);
 
-	return startMinecraft(launchArguments, options);
+	// return startMinecraft(launchArguments, options);
 }
 
 async function extractPackage(options: ILauncherOptions): Promise<void> {
 	if (!options.clientPackage) return;
 
-	client.emit('debug', `[MCLC]: Extracting client package to ${options.root}`);
+	client.emit('debug', `Extracting client package to ${options.root}`);
 	await downloadAndExtractPackage(options);
 }
 
@@ -247,7 +239,7 @@ async function downloadAsync(
 			if (response.status === 404) {
 				client.emit(
 					'debug',
-					`[MCLC]: Failed to download ${url} due to: File not found...`,
+					`Failed to download ${url} due to: File not found...`,
 				);
 				return false;
 			}
@@ -286,7 +278,7 @@ async function downloadAsync(
 	} catch (error) {
 		client.emit(
 			'debug',
-			`[MCLC]: Failed to download asset to ${join(directory, name)} due to\n${error}. Retrying... ${retry}`,
+			`Failed to download asset to ${join(directory, name)} due to\n${error}. Retrying... ${retry}`,
 		);
 
 		if (existsSync(join(directory, name))) {
@@ -313,7 +305,7 @@ async function checkJava(java: string) {
 
 		const version = stderr.match(/"(.*?)"/)?.[1];
 		const arch = stderr.includes('64-Bit') ? '64-bit' : '32-Bit';
-		client.emit('debug', `[MCLC]: Using Java version ${version} ${arch}`);
+		client.emit('debug', `Using Java version ${version} ${arch}`);
 		return { run: true };
 	} catch (error) {
 		return { run: false, message: error };
@@ -323,7 +315,7 @@ async function checkJava(java: string) {
 function createRootDirectory({ root }: ILauncherOptions): void {
 	if (existsSync(root)) return;
 
-	client.emit('debug', '[MCLC]: Attempting to create root folder');
+	client.emit('debug', 'Attempting to create root folder');
 	mkdirSync(root);
 }
 
@@ -374,14 +366,14 @@ async function getVersion(
 
 		if (!existsSync(cache)) {
 			mkdirSync(cache, { recursive: true });
-			client.emit('debug', '[MCLC]: Cache directory created.');
+			client.emit('debug', 'Cache directory created.');
 		}
 
 		await writeFileAsync(
 			join(cache, 'version_manifest.json'),
 			JSON.stringify(manifestData, null, 2),
 		);
-		client.emit('debug', '[MCLC]: Cached version_manifest.json');
+		client.emit('debug', 'Cached version_manifest.json');
 
 		const desiredVersion = (
 			manifestData as { versions: Array<{ id: string; url: string }> }
@@ -402,8 +394,8 @@ async function getVersion(
 			join(cache, `${options.version.number}.json`),
 			JSON.stringify(versionData, null, 2),
 		);
-		client.emit('debug', `[MCLC]: Cached ${options.version.number}.json`);
-		client.emit('debug', '[MCLC]: Parsed version from version manifest');
+		client.emit('debug', `Cached ${options.version.number}.json`);
+		client.emit('debug', 'Parsed version from version manifest');
 
 		return versionData;
 	} catch (error) {
@@ -496,11 +488,11 @@ async function getNatives(
 				});
 			}),
 		);
-		client.emit('debug', '[MCLC]: Downloaded and extracted natives');
+		client.emit('debug', 'Downloaded and extracted natives');
 	}
 
 	counter = 0;
-	client.emit('debug', `[MCLC]: Set native path to ${nativeDirectory}`);
+	client.emit('debug', `Set native path to ${nativeDirectory}`);
 
 	return nativeDirectory;
 }
@@ -543,7 +535,7 @@ function getOS() {
 
 async function getJar(options: ILauncherOptions, version: IVersionManifest) {
 	if (!options.directory) {
-		client.emit('debug', '[MCLC]: No version directory specified');
+		client.emit('debug', 'No version directory specified');
 		return false;
 	}
 	await downloadAsync(
@@ -557,10 +549,7 @@ async function getJar(options: ILauncherOptions, version: IVersionManifest) {
 		join(options.directory, `${options.version.number}.json`),
 		JSON.stringify(version, null, 4),
 	);
-	return client.emit(
-		'debug',
-		'[MCLC]: Downloaded version jar and wrote version json',
-	);
+	return client.emit('debug', 'Downloaded version jar and wrote version json');
 }
 
 async function customCheckSum(
@@ -572,7 +561,7 @@ async function customCheckSum(
 		const fileHash = createHash('sha1').update(buffer).digest('hex');
 		return hash === fileHash;
 	} catch (err) {
-		client.emit('debug', `[MCLC]: Failed to check file hash due to ${err}`);
+		client.emit('debug', `Failed to check file hash due to ${err}`);
 		return false;
 	}
 }
@@ -596,7 +585,7 @@ function cleanUp<T>(array: T[] | Record<string, T>): T[] {
 
 function getMemory(options: ILauncherOptions) {
 	if (!options.memory) {
-		client.emit('debug', '[MCLC]: Memory not set! Setting 1GB as MAX!');
+		client.emit('debug', 'Memory not set! Setting 1GB as MAX!');
 		options.memory = {
 			min: 512,
 			max: 1023,
@@ -620,7 +609,7 @@ function getMemory(options: ILauncherOptions) {
 
 	// Ensure min is not greater than max
 	if (minMem > maxMem) {
-		client.emit('debug', '[MCLC]: MIN memory is higher than MAX! Resetting!');
+		client.emit('debug', 'MIN memory is higher than MAX! Resetting!');
 		return ['1024M', '512M'];
 	}
 
@@ -637,7 +626,7 @@ async function getModifyJson(options: ILauncherOptions) {
 		`${options.version.custom}.json`,
 	);
 
-	client.emit('debug', '[MCLC]: Loading custom version file');
+	client.emit('debug', 'Loading custom version file');
 	return JSON.parse(readFileSync(customVersionPath, 'utf-8'));
 }
 
@@ -698,7 +687,7 @@ async function getClasses(
 	);
 	counter = 0;
 
-	client.emit('debug', '[MCLC]: Collected class paths');
+	client.emit('debug', 'Collected class paths');
 	return libs;
 }
 
@@ -832,12 +821,12 @@ async function getAssets(options: ILauncherOptions, version: IVersionManifest) {
 		if (existsSync(join(assetDirectory, 'legacy'))) {
 			client.emit(
 				'debug',
-				`[MCLC]: The 'legacy' directory is no longer used as Minecraft looks for the resouces folder regardless of what is passed in the assetDirecotry launch option. I'd recommend removing the directory (${join(assetDirectory, 'legacy')})`,
+				`The 'legacy' directory is no longer used as Minecraft looks for the resouces folder regardless of what is passed in the assetDirecotry launch option. I'd recommend removing the directory (${join(assetDirectory, 'legacy')})`,
 			);
 		}
 
 		const legacyDirectory = join(options.root, 'resources');
-		client.emit('debug', `[MCLC]: Copying assets over to ${legacyDirectory}`);
+		client.emit('debug', `Copying assets over to ${legacyDirectory}`);
 
 		client.emit('progress', {
 			type: 'assets-copy',
@@ -874,7 +863,7 @@ async function getAssets(options: ILauncherOptions, version: IVersionManifest) {
 	}
 	counter = 0;
 
-	client.emit('debug', '[MCLC]: Downloaded assets');
+	client.emit('debug', 'Downloaded assets');
 }
 
 function isLegacy(version: IVersionManifest) {
@@ -998,7 +987,7 @@ async function getLaunchOptions(
 	if (options.server)
 		client.emit(
 			'debug',
-			'[MCLC]: server and port are deprecated launch flags. Use the quickPlay field.',
+			'server and port are deprecated launch flags. Use the quickPlay field.',
 		);
 	if (options.quickPlay) args = args.concat(formatQuickPlay(options));
 	if (options.proxy) {
@@ -1017,7 +1006,7 @@ async function getLaunchOptions(
 		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 		(value: any) => typeof value === 'string' || typeof value === 'number',
 	);
-	client.emit('debug', '[MCLC]: Set launch options');
+	client.emit('debug', 'Set launch options');
 	return args;
 }
 
@@ -1035,7 +1024,7 @@ function formatQuickPlay(options: ILauncherOptions) {
 	if (!keys.includes(type)) {
 		client.emit(
 			'debug',
-			`[MCLC]: quickPlay type is not valid. Valid types are: ${keys.join(', ')}`,
+			`quickPlay type is not valid. Valid types are: ${keys.join(', ')}`,
 		);
 		return;
 	}

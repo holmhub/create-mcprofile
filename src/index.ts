@@ -8,7 +8,12 @@ import {
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { getAuth, launch } from './client';
-import { getFromInput, selectFromList, selectVersion } from './utils';
+import {
+	getFromInput,
+	handleProgress,
+	selectFromList,
+	selectVersion,
+} from './utils';
 
 const rl = createInterface({
 	input: process.stdin,
@@ -135,7 +140,7 @@ async function main(): Promise<void> {
 			);
 		}
 
-		const launcher = await launch({
+		const launcher = launch({
 			clientPackage: undefined,
 			authorization: getAuth(username),
 			root: MC_PATH,
@@ -158,12 +163,15 @@ async function main(): Promise<void> {
 
 		launcher.on('debug', console.log);
 		launcher.on('data', console.log);
-		launcher.on(
-			'progress',
-			(e: { type: string; task: string; total: number }) => {
-				console.log(`Download progress: ${e.type} | ${e.task} | ${e.total}`);
-			},
-		);
+		// launcher.on(
+		// 	'progress',
+
+		// 	(e: { type: string; task: string; total: number }) => {
+		// 		console.log(`Download progress: ${e.type} | ${e.task} | ${e.total}`);
+		// 	},
+		// );
+
+		launcher.on('progress', handleProgress);
 	} catch (error) {
 		console.error('Error launching Minecraft:', error);
 	}
