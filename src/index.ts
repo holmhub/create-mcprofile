@@ -8,9 +8,7 @@ import {
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { getAuth, launch } from './client';
-import { getFromInput } from './utils/input';
-import { selectFromList } from './utils/select';
-import { selectVersion } from './utils/versions';
+import { getFromInput, selectFromList, selectVersion } from './utils';
 
 const rl = createInterface({
 	input: process.stdin,
