@@ -1,15 +1,40 @@
-# mclauncher
+# BTML (Bun TypeScript Minecraft Launcher)
 
-To install dependencies:
+A lightweight, modern Minecraft launcher built with Bun and TypeScript.
 
-```bash
-bun install
-```
+## Available Scripts
 
-To run:
+### Development
+- `bun run dev` - Start the launcher in development mode
+- `bun run format` - Format code using Biome
+- `bun run lint` - Run linting checks
+- `bun run check` - Run all code checks
 
-```bash
-bun run index.ts
-```
+### Building
+- `bun run build` - Build the project (outputs to dist/)
+- `bun run start` - Run the built version
+- `bun run compile` - Create executable binary
 
-This project was created using `bun init` in bun v1.2.8. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+## Requirements
+- Bun v1.2.8 or higher
+- Java Runtime Environment (for Minecraft)
+
+## Getting Started
+
+1. Install dependencies:
+   ```bash
+   bun install
+   ```
+2. Start development:
+   ```bash
+   bun run dev
+   ```
+3. Build for production:
+   ```bash
+   bun run build
+   ```
+## Notes
+- Requires Java to be installed and accessible
+- Supports mod loaders (Forge, Fabric)
+- Handles version management and asset downloads
+- Includes offline mode support
