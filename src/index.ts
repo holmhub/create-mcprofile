@@ -137,8 +137,6 @@ async function main(): Promise<void> {
 			);
 		}
 
-		console.log('Launching Minecraft...');
-
 		const launcher = await launch({
 			clientPackage: undefined,
 			authorization: getAuth(username),

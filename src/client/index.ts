@@ -32,11 +32,6 @@ const writeFileAsync = promisify(writeFile);
 let counter = 0;
 
 const client = new EventEmitter();
-client.on('debug', console.log);
-client.on('data', console.log);
-client.on('progress', (e: { type: string; task: string; total: number }) => {
-	console.log(`Download progress: ${e.type} | ${e.task} | ${e.total}`);
-});
 
 export async function launch(options: ILauncherOptions): Promise<EventEmitter> {
 	options.root = resolve(options.root);
@@ -91,8 +86,6 @@ export async function launch(options: ILauncherOptions): Promise<EventEmitter> {
 	options.mcPath = mcPath;
 	const nativePath = await getNatives(options, versionFile);
 
-	console.log(mcPath);
-
 	if (!existsSync(mcPath)) {
 		client.emit(
 			'debug',
@@ -102,8 +95,6 @@ export async function launch(options: ILauncherOptions): Promise<EventEmitter> {
 	}
 
 	const modifyJson = await getModifyJson(options);
-
-	console.log('modifyJson', modifyJson);
 
 	const args: string[] = [];
 
@@ -491,18 +482,11 @@ async function getNatives(
 						'natives',
 					);
 				}
-				try {
-					await pipeline(
-						createReadStream(join(nativeDirectory, name)),
-						createUnzip(),
-						createWriteStream(nativeDirectory),
-					);
-				} catch (e) {
-					// Only doing a console.warn since a stupid error happens. You can basically ignore this.
-					// if it says Invalid file name, just means two files were downloaded and both were deleted.
-					// All is well.
-					console.warn(e);
-				}
+				await pipeline(
+					createReadStream(join(nativeDirectory, name)),
+					createUnzip(),
+					createWriteStream(nativeDirectory),
+				);
 				unlinkSync(join(nativeDirectory, name));
 				counter++;
 				client.emit('progress', {
@@ -653,8 +637,6 @@ async function getModifyJson(options: ILauncherOptions) {
 		`${options.version.custom}.json`,
 	);
 
-	console.log('customVersionPath', customVersionPath);
-
 	client.emit('debug', '[MCLC]: Loading custom version file');
 	return JSON.parse(readFileSync(customVersionPath, 'utf-8'));
 }
@@ -676,8 +658,6 @@ async function getClasses(
 	version: IVersionManifest,
 ) {
 	let libs: string[] = [];
-
-	console.log('getClasses', classJson);
 
 	const libraryDirectory = resolve(
 		options.overrides?.libraryRoot || join(options.root, 'libraries'),
