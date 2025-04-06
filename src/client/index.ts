@@ -1,4 +1,5 @@
 import { exec, spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { EventEmitter } from 'node:events';
 import {
 	copyFileSync,
@@ -12,12 +13,12 @@ import {
 	writeFile,
 	writeFileSync,
 } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import { join, resolve, sep } from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { promisify } from 'node:util';
 import { createUnzip } from 'node:zlib';
 import { randomUUIDv7 } from 'bun';
-import checksum from 'checksum';
 import type {
 	IArtifact,
 	ILauncherOptions,
@@ -578,16 +579,18 @@ async function getJar(options: ILauncherOptions, version: IVersionManifest) {
 	);
 }
 
-function customCheckSum(hash: string, filename: string) {
-	return new Promise((resolve, reject) => {
-		checksum.file(filename, (err, sum) => {
-			if (err) {
-				client.emit('debug', `[MCLC]: Failed to check file hash due to ${err}`);
-				return resolve(false);
-			}
-			return resolve(hash === sum);
-		});
-	});
+async function customCheckSum(
+	hash: string,
+	filename: string,
+): Promise<boolean> {
+	try {
+		const buffer = await readFile(filename);
+		const fileHash = createHash('sha1').update(buffer).digest('hex');
+		return hash === fileHash;
+	} catch (err) {
+		client.emit('debug', `[MCLC]: Failed to check file hash due to ${err}`);
+		return false;
+	}
 }
 
 function cleanUp<T>(array: T[] | Record<string, T>): T[] {

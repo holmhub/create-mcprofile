@@ -14,9 +14,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
-    "@types/bun": "^1.2.8",
-    "@types/checksum": "^0.1.35",
-    "checksum": "^1.0.0"
+    "@types/bun": "^1.2.8"
   },
   "peerDependencies": {
     "typescript": "^5"
