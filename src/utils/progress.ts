@@ -4,13 +4,6 @@ interface DownloadProgress {
 	total: number;
 }
 
-const formatBytes = (bytes: number): string => {
-	const sizes = ['B', 'KB', 'MB', 'GB'];
-	if (bytes === 0) return '0 B';
-	const i = Math.floor(Math.log(bytes) / Math.log(1024));
-	return `${(bytes / 1024 ** i).toFixed(2)} ${sizes[i]}`;
-};
-
 export const handleProgress = (e: DownloadProgress): void => {
 	const percent = Math.floor((e.task / e.total) * 100);
 	const width = 30;
@@ -18,7 +11,7 @@ export const handleProgress = (e: DownloadProgress): void => {
 	const bar = '█'.repeat(filled) + '░'.repeat(width - filled);
 
 	process.stdout.write(
-		`\r${e.type} [${bar}] ${percent}% | ${formatBytes(e.task)}/${formatBytes(e.total)}`,
+		`\r${e.type} [${bar}] ${percent}% | ${e.task}/${e.total} files`,
 	);
 
 	if (percent === 100) {
