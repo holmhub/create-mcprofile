@@ -1,19 +1,14 @@
-# BTML (Bun TypeScript Minecraft Launcher)
+# bun-mc-launcher
 
-A lightweight, modern Minecraft launcher built with Bun and TypeScript.
+A lightweight, modern Minecraft launcher built with Bun and TypeScript. Zero dependencies, fast performance, and offline support.
 
-## Available Scripts
-
-### Development
-- `bun run dev` - Start the launcher in development mode
-- `bun run format` - Format code using Biome
-- `bun run lint` - Run linting checks
-- `bun run check` - Run all code checks
-
-### Building
-- `bun run build` - Build the project (outputs to dist/)
-- `bun run start` - Run the built version
-- `bun run compile` - Create executable binary
+## Features
+- Built with Bun and TypeScript
+- Zero external dependencies
+- Version management and asset downloads
+- Custom game directory support
+- Offline mode support
+- Mod loader compatibility (Forge, Fabric)
 
 ## Requirements
 - Bun v1.2.8 or higher

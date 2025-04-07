@@ -1,5 +1,5 @@
 {
-  "name": "btml",
+  "name": "bun-mc-launcher",
   "version": "1.0.0",
   "module": "src/index.ts",
   "private": false,
