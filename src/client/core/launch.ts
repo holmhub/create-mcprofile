@@ -158,7 +158,11 @@ export async function init(options: ILauncherOptions) {
 		versionFile,
 	);
 
-	const launchArguments = args.concat(jvm, classPaths, launchOptions);
+	const stringArgs = launchOptions.map((arg) =>
+		typeof arg === 'string' ? arg : String(arg),
+	);
+	const launchArguments = args.concat(jvm, classPaths, stringArgs);
+
 	client.emit('arguments', launchArguments);
 
 	return startMinecraft(launchArguments, options);
@@ -184,8 +188,7 @@ function startMinecraft(launchArguments: string[], options: ILauncherOptions) {
 }
 
 async function getLaunchOptions(
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-	modification: any,
+	modification: IVersionManifest,
 	options: ILauncherOptions,
 	version: IVersionManifest,
 ) {
@@ -264,26 +267,32 @@ async function getLaunchOptions(
 	};
 
 	for (let index = 0; index < args.length; index++) {
-		if (typeof args[index] === 'object') {
-			if (args[index]?.rules) {
-				if (!options.features) continue;
-				const featureFlags = [];
-				for (const rule of args[index].rules) {
-					featureFlags.push(...Object.keys(rule.features));
+		const arg = args[index];
+
+		if (typeof arg === 'object' && arg !== null) {
+			// Handle argument objects with rules
+			if ('rules' in arg && Array.isArray(arg.rules)) {
+				if (!options.features?.length) continue;
+
+				const requiredFeatures = arg.rules.flatMap((rule) =>
+					rule.features ? Object.keys(rule.features) : [],
+				);
+
+				const hasAllRequiredFeatures = options.features.every((feature) =>
+					requiredFeatures.includes(feature),
+				);
+
+				if (hasAllRequiredFeatures) {
+					replaceArg(arg, index);
 				}
-				let hasAllRules = true;
-				for (const feature of options.features) {
-					if (!featureFlags.includes(feature)) {
-						hasAllRules = false;
-					}
-				}
-				if (hasAllRules) replaceArg(args[index], index);
 			} else {
-				replaceArg(args[index], index);
+				// Handle simple argument objects
+				replaceArg(arg, index);
 			}
-		} else {
-			if (Object.keys(fields).includes(args[index])) {
-				args[index] = fields[args[index] as keyof typeof fields];
+		} else if (typeof arg === 'string') {
+			// Replace template variables with actual values
+			if (arg in fields) {
+				args[index] = fields[arg as keyof typeof fields] as string;
 			}
 		}
 	}
@@ -302,7 +311,12 @@ async function getLaunchOptions(
 			'debug',
 			'server and port are deprecated launch flags. Use the quickPlay field.',
 		);
-	if (options.quickPlay) args = args.concat(formatQuickPlay(options));
+	if (options.quickPlay) {
+		const quickPlayArgs = formatQuickPlay(options);
+		if (quickPlayArgs) {
+			args = args.concat(quickPlayArgs);
+		}
+	}
 	if (options.proxy) {
 		args.push(
 			'--proxyHost',
@@ -310,20 +324,19 @@ async function getLaunchOptions(
 			'--proxyPort',
 			options.proxy.port || '8080',
 			'--proxyUser',
-			options.proxy.username,
+			options.proxy.username || '',
 			'--proxyPass',
-			options.proxy.password,
+			options.proxy.password || '',
 		);
 	}
 	args = args.filter(
-		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-		(value: any) => typeof value === 'string' || typeof value === 'number',
+		(value) => typeof value === 'string' || typeof value === 'number',
 	);
 	client.emit('debug', '🚀 Launching Minecraft...');
 	return args;
 }
 
-function formatQuickPlay(options: ILauncherOptions) {
+function formatQuickPlay(options: ILauncherOptions): string[] | undefined {
 	if (!options.quickPlay) return;
 
 	const types = {
@@ -331,9 +344,11 @@ function formatQuickPlay(options: ILauncherOptions) {
 		multiplayer: '--quickPlayMultiplayer',
 		realms: '--quickPlayRealms',
 		legacy: null,
-	};
+	} as const;
+
 	const { type, identifier, path } = options.quickPlay;
 	const keys = Object.keys(types);
+
 	if (!keys.includes(type)) {
 		client.emit(
 			'debug',
@@ -341,15 +356,22 @@ function formatQuickPlay(options: ILauncherOptions) {
 		);
 		return;
 	}
-	const returnArgs =
-		type === 'legacy'
-			? [
-					'--server',
-					identifier.split(':')[0],
-					'--port',
-					identifier.split(':')[1] || '25565',
-				]
-			: [types[type], identifier];
-	if (path) returnArgs.push('--quickPlayPath', path);
+
+	const isLegacyServer = type === 'legacy';
+	const [serverHost = '', serverPort = '25565'] = isLegacyServer
+		? identifier.split(':')
+		: ['', ''];
+	const quickPlayType = isLegacyServer ? '' : types[type] || '';
+
+	const returnArgs: string[] = isLegacyServer
+		? ['--server', serverHost, '--port', serverPort]
+		: [quickPlayType, identifier].filter(
+				(arg): arg is string => arg !== '' && arg !== null,
+			);
+
+	if (path) {
+		returnArgs.push('--quickPlayPath', path);
+	}
+
 	return returnArgs;
 }

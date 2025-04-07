@@ -242,13 +242,22 @@ export interface IUser {
 	};
 }
 
+export interface IGameArgument {
+	rules?: Array<{
+		features: Record<string, boolean>;
+	}>;
+	value: string | string[];
+}
+
 export interface IVersionManifest {
 	id: string;
 	type: 'release' | 'snapshot';
 	time: string;
 	assets: string;
 	releaseTime: string;
-	arguments: { game: string };
+	arguments: {
+		game: Array<string | IGameArgument>;
+	};
 	minecraftArguments: string;
 	minimumLauncherVersion: number;
 	mainClass: string;
