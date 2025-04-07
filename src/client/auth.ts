@@ -1,8 +1,8 @@
-import { randomUUIDv7 } from 'bun';
+import { randomUUID } from 'node:crypto';
 import type { IUser } from './types';
 
 export function getAuth(username: string): IUser {
-	const uuid = randomUUIDv7();
+	const uuid = randomUUID();
 
 	return {
 		access_token: uuid,
