@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path';
 import { getAssets, isLegacy } from '../handlers/assets.ts';
 import { getClasses, getModifyJson } from '../handlers/libraries.ts';
 import { getNatives } from '../handlers/natives.ts';
-import { getJar, getVersion } from '../handlers/version.ts';
+import { getJar, getMinorVersion, getVersion } from '../handlers/version.ts';
 import { client } from '../index.ts';
 import type { ILauncherOptions, IVersionManifest } from '../types.ts';
 import {
@@ -86,10 +86,16 @@ export async function init(options: ILauncherOptions) {
 		`-Xmx${getMemory(options)[0]}`,
 		`-Xms${getMemory(options)[1]}`,
 	];
+
+	const minorVersion = getMinorVersion(versionFile.id);
+
 	if (getOS() === 'osx') {
-		if (Number.parseInt(versionFile.id.split('.')[1] || '') > 12)
-			jvm.push(await getJVM());
-	} else jvm.push(await getJVM());
+		if (minorVersion > 12) {
+			jvm.push(getJVM());
+		}
+	} else {
+		jvm.push(getJVM());
+	}
 
 	if (options.customArgs) jvm = jvm.concat(options.customArgs);
 	if (options.overrides.logj4ConfigurationFile) {
@@ -97,21 +103,18 @@ export async function init(options: ILauncherOptions) {
 			`-Dlog4j.configurationFile=${resolve(options.overrides.logj4ConfigurationFile)}`
 		);
 	}
+
 	// https://help.minecraft.net/hc/en-us/articles/4416199399693-Security-Vulnerability-in-Minecraft-Java-Edition
-	if (
-		Number.parseInt(versionFile.id.split('.')[1] || '') === 18 &&
-		!Number.parseInt(versionFile.id.split('.')[2] || '')
-	)
+	if (minorVersion === 18 || minorVersion === 17) {
 		jvm.push('-Dlog4j2.formatMsgNoLookups=true');
-	if (Number.parseInt(versionFile.id.split('.')[1] || '') === 17)
-		jvm.push('-Dlog4j2.formatMsgNoLookups=true');
+	}
+
 	if (
-		Number.parseInt(versionFile.id.split('.')[1] || '') < 17 &&
+		minorVersion < 17 &&
 		!jvm.find((arg) => arg.includes('Dlog4j.configurationFile'))
 	) {
 		const configPath = resolve(options.overrides.cwd || options.root);
-		const intVersion = Number.parseInt(versionFile.id.split('.')[1] || '');
-		if (intVersion >= 12) {
+		if (minorVersion >= 12) {
 			await downloadAsync(
 				'https://launcher.mojang.com/v1/objects/02937d122c86ce73319ef9975b58896fc1b491d1/log4j2_112-116.xml',
 				configPath,
@@ -120,7 +123,7 @@ export async function init(options: ILauncherOptions) {
 				'log4j'
 			);
 			jvm.push('-Dlog4j.configurationFile=log4j2_112-116.xml');
-		} else if (intVersion >= 7) {
+		} else if (minorVersion >= 7) {
 			await downloadAsync(
 				'https://launcher.mojang.com/v1/objects/dd2b723346a8dcd48e7f4d245f6bf09e98db9696/log4j2_17-111.xml',
 				configPath,
