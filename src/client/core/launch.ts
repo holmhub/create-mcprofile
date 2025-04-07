@@ -272,13 +272,13 @@ async function getLaunchOptions(
 		if (typeof arg === 'object' && arg !== null) {
 			// Handle argument objects with rules
 			if ('rules' in arg && Array.isArray(arg.rules)) {
-				if (!options.features?.length) continue;
+				if (options.features?.length === 0) continue;
 
 				const requiredFeatures = arg.rules.flatMap((rule) =>
 					rule.features ? Object.keys(rule.features) : [],
 				);
 
-				const hasAllRequiredFeatures = options.features.every((feature) =>
+				const hasAllRequiredFeatures = options.features?.every((feature) =>
 					requiredFeatures.includes(feature),
 				);
 

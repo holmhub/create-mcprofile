@@ -26,7 +26,22 @@
 				"noVoidTypeReturn": "error"
 			},
 			"suspicious": {
-				"useAwait": "error"
+				"all": true,
+				"noAsyncPromiseExecutor": "error",
+				"useAwait": "error",
+				"useIsArray": "error",
+				"noEmptyBlockStatements": "off",
+				"noConsoleLog": "off",
+				"noConsole": "off"
+			},
+			"style": {
+				"all": true,
+				"noNonNullAssertion": "off",
+				"useNamingConvention": "off",
+				"useNodeAssertStrict": "off",
+				"noNamespaceImport": "off",
+				"useBlockStatements": "off",
+				"noDefaultExport": "off"
 			}
 		}
 	},

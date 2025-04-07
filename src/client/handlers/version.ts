@@ -17,7 +17,7 @@ export async function getVersion(
 	options: ILauncherOptions,
 ): Promise<IVersionManifest> {
 	if (!options.directory) {
-		throw Error('No version directory specified');
+		throw new Error('No version directory specified');
 	}
 
 	const versionJsonPath =
@@ -56,7 +56,7 @@ export async function getVersion(
 		);
 
 		if (!desiredVersion) {
-			throw Error(
+			throw new Error(
 				`Failed to find version ${options.version.number} in version_manifest.json`,
 			);
 		}

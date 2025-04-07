@@ -25,7 +25,7 @@ export async function getNatives(
 	}
 
 	// Return existing natives if already extracted
-	if (existsSync(nativeDirectory) && readdirSync(nativeDirectory).length) {
+	if (existsSync(nativeDirectory) && readdirSync(nativeDirectory).length > 0) {
 		return nativeDirectory;
 	}
 
