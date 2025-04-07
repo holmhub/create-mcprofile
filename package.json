@@ -8,7 +8,7 @@
     "dev": "bun .",
     "build": "rm -rf dist && bun build --target=bun --minify --sourcemap=none --outdir=dist ./src/index.ts",
     "start": "bun run dist/index.js",
-    "compile": "bun build --compile --minify --sourcemap --bytecode --bytecode dist/index.js --outfile dist/myapp",
+    "compile": "bun build --compile --minify --sourcemap --bytecode --bytecode . --outfile dist/myapp",
     "test": "bun test",
     "format": "biome format --write ./src",
     "lint": "biome lint ./src",

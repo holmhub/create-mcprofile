@@ -29,13 +29,16 @@ export async function selectVersion(
 
 	// Display versions
 	console.log(`${title}:`);
-	versions.forEach((version, index) => {
-		console.log(`${index + 1}. ${version.id} (${version.type})`);
+	[...versions].reverse().forEach((version, index) => {
+		console.log(`${versions.length - index}. ${version.id} (${version.type})`);
 	});
 
-	const input = await getFromInput('Select version number: ', rl);
-
-	const selectedVersion = versions[Number.parseInt(input) - 1];
+	const input = await getFromInput(
+		'Select version number (default: latest): ',
+		rl
+	);
+	const selectedIndex = input ? Number.parseInt(input) - 1 : 0;
+	const selectedVersion = versions[selectedIndex];
 	if (!selectedVersion) {
 		throw new Error('Invalid version selected');
 	}
