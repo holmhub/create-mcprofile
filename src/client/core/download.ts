@@ -1,17 +1,10 @@
 import { createHash } from 'node:crypto';
-import {
-	createReadStream,
-	createWriteStream,
-	existsSync,
-	mkdirSync,
-	unlinkSync,
-} from 'node:fs';
+import { createWriteStream, existsSync, mkdirSync, unlinkSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join, sep } from 'node:path';
-import { pipeline } from 'node:stream/promises';
-import { createUnzip } from 'node:zlib';
 import { client } from '..';
 import type { ILauncherOptions, ILibrary } from '../types';
+import { unzipFile } from '../utils/compressor';
 import { parseRule } from '../utils/system';
 
 let counter = 0;
@@ -22,11 +15,14 @@ export async function downloadAsync(
 	name: string,
 	retry: boolean,
 	type: string,
-) {
+	timeoutms = 50000,
+): Promise<void> {
+	const filePath = join(directory, name);
+
 	try {
 		mkdirSync(directory, { recursive: true });
 		const controller = new AbortController();
-		const timeout = setTimeout(() => controller.abort(), 50000); // 50s timeout
+		const timeout = setTimeout(() => controller.abort(), timeoutms);
 
 		const response = await fetch(url, {
 			signal: controller.signal,
@@ -40,7 +36,7 @@ export async function downloadAsync(
 					'debug',
 					`Failed to download ${url} due to: File not found...`,
 				);
-				return false;
+				return;
 			}
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}
@@ -48,7 +44,7 @@ export async function downloadAsync(
 		const totalBytes = Number(response.headers.get('content-length'));
 		let receivedBytes = 0;
 
-		const file = createWriteStream(join(directory, name));
+		const file = createWriteStream(filePath);
 		const reader = response.body?.getReader();
 
 		if (!reader) throw new Error('No reader available');
@@ -72,18 +68,9 @@ export async function downloadAsync(
 
 		await new Promise<void>((resolve) => file.once('finish', () => resolve()));
 		client.emit('download', name);
-
-		return { failed: false, asset: null };
-	} catch (error) {
-		if (existsSync(join(directory, name))) {
-			unlinkSync(join(directory, name));
-		}
-
-		if (retry) {
-			return downloadAsync(url, directory, name, false, type);
-		}
-
-		return { failed: true, asset: null };
+	} catch {
+		if (existsSync(filePath)) unlinkSync(filePath);
+		if (retry) downloadAsync(url, directory, name, false, type);
 	}
 }
 
@@ -102,12 +89,7 @@ export async function downloadAndExtractPackage(options: ILauncherOptions) {
 		options.clientPackage = join(root, 'clientPackage.zip');
 	}
 
-	await pipeline(
-		createReadStream(clientPackage),
-		createUnzip(),
-		createWriteStream(root),
-	);
-
+	unzipFile(clientPackage, root);
 	if (removePackage) unlinkSync(clientPackage);
 
 	return client.emit('package-extract', true);

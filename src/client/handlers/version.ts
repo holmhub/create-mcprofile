@@ -80,16 +80,14 @@ export async function getVersion(
 				'code' in error &&
 				error.code === 'ENOTFOUND'
 			) {
-				const manifestCache = JSON.parse(
-					readFileSync(join(cache, 'version_manifest.json'), 'utf-8'),
-				);
+				JSON.parse(readFileSync(join(cache, 'version_manifest.json'), 'utf-8'));
 				const versionCache = JSON.parse(
 					readFileSync(join(cache, `${options.version.number}.json`), 'utf-8'),
 				);
 				return versionCache;
 			}
 			throw error;
-		} catch (cacheError) {
+		} catch {
 			throw new Error(`Failed to get version: ${error}`);
 		}
 	}

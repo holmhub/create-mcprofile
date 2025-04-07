@@ -5,8 +5,6 @@ import { downloadToDirectory } from '../core/download';
 import type { ILauncherOptions, IVersionManifest } from '../types';
 import { parseRule } from '../utils/system';
 
-let counter = 0;
-
 export async function getClasses(
 	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 	classJson: any,
@@ -52,7 +50,6 @@ export async function getClasses(
 	libs = libs.concat(
 		await downloadToDirectory(libraryDirectory, parsed, 'classes'),
 	);
-	counter = 0;
 
 	client.emit('debug', 'Collected class paths');
 	return libs;
