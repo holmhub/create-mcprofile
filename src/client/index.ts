@@ -1,7 +1,6 @@
 import { EventEmitter } from 'node:events';
 import { init } from './core/launch';
 import type { ILauncherOptions } from './types';
-export { getAuth } from './auth';
 
 export const client = new EventEmitter();
 
