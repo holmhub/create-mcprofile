@@ -24,16 +24,19 @@
 				"all": true
 			},
 			"complexity": {
-				"noExcessiveCognitiveComplexity": "off"
+				"noExcessiveCognitiveComplexity": "off",
+				"noUselessTypeConstraint": "error"
 			},
 			"correctness": {
 				"all": true,
 				"useImportExtensions": "error",
 				"noUnusedVariables": "error",
 				"noUnusedImports": "error",
+				"noPrecisionLoss": "error",
 				"noVoidTypeReturn": "error",
 				"noNodejsModules": "off",
-				"noUndeclaredDependencies": "off"
+				"noUndeclaredDependencies": "off",
+				"useHookAtTopLevel": "warn"
 			},
 			"nursery": {
 				"all": true,
@@ -62,7 +65,10 @@
 				"useIsArray": "error",
 				"noEmptyBlockStatements": "off",
 				"noConsoleLog": "off",
-				"noConsole": "off"
+				"noConsole": "off",
+				"noExtraNonNullAssertion": "error",
+				"noMisleadingInstantiator": "error",
+				"useNamespaceKeyword": "error"
 			},
 			"style": {
 				"all": true,
@@ -71,12 +77,15 @@
 				"useNodeAssertStrict": "off",
 				"noNamespaceImport": "off",
 				"useBlockStatements": "off",
-				"noDefaultExport": "off"
+				"noDefaultExport": "off",
+				"useConst": "warn",
+				"useAsConstAssertion": "warn"
 			}
 		}
 	},
 	"javascript": {
 		"formatter": {
+			"jsxQuoteStyle": "single",
 			"quoteProperties": "asNeeded",
 			"trailingCommas": "es5",
 			"semicolons": "always",
