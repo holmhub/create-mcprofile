@@ -9,7 +9,7 @@ import type {
 } from '../types.ts';
 import { unzipFile } from '../utils/compressor.ts';
 import { getOS, parseRule } from '../utils/system.ts';
-import { getMinorVersion } from './version.ts';
+import { parseVersion } from './version.ts';
 
 /**
  * Downloads and extracts native libraries for Minecraft
@@ -24,7 +24,7 @@ export async function getNatives(
 	);
 
 	// Skip natives extraction for Minecraft 1.19+ as they're bundled with the game
-	if (getMinorVersion(version.id) >= 19) {
+	if (parseVersion(version.id).minorVersion >= 19) {
 		return options.overrides?.cwd || options.root;
 	}
 

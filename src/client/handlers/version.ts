@@ -115,10 +115,11 @@ export async function getJar(
 	return client.emit('debug', 'Downloaded version jar and wrote version json');
 }
 
-export function getMinorVersion(versionId: string): number {
-	return Number.parseInt(versionId.split('.')[1] || '0');
-}
-
-export function getPatchVersion(versionId: string): number {
-	return Number.parseInt(versionId.split('.')[2] || '0');
+export function parseVersion(versionId: string | undefined) {
+	const [majorVersion = 0, minorVersion = 0, patchVersion = 0] = (
+		versionId || ''
+	)
+		.split('.')
+		.map(Number.parseInt);
+	return { majorVersion, minorVersion, patchVersion };
 }

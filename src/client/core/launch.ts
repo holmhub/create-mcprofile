@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path';
 import { getAssets, isLegacy } from '../handlers/assets.ts';
 import { getClasses, getModifyJson } from '../handlers/libraries.ts';
 import { getNatives } from '../handlers/natives.ts';
-import { getJar, getMinorVersion, getVersion } from '../handlers/version.ts';
+import { getJar, parseVersion, getVersion } from '../handlers/version.ts';
 import { client } from '../index.ts';
 import type { ILauncherOptions, IVersionManifest } from '../types.ts';
 import {
@@ -72,13 +72,10 @@ export async function init(options: ILauncherOptions) {
 	const modifyJson = await getModifyJson(options);
 
 	const args: string[] = [];
-	const minorVersion = getMinorVersion(versionFile.id);
+	const { minorVersion } = parseVersion(versionFile.id);
 
 	// Version compatibility check for Java
-	if (
-		minorVersion < 6 &&
-		Number.parseInt(java.version?.split('.')[1] || '21') > 8
-	) {
+	if (minorVersion < 6 && parseVersion(java.version).majorVersion > 8) {
 		client.emit(
 			'debug',
 			'Minecraft versions before 1.6 require Java 8. Please install and use Java 8 for this version.'
