@@ -22,7 +22,11 @@
 			"recommended": true,
 			"correctness": {
 				"noUnusedVariables": "error",
-				"noUnusedImports": "error"
+				"noUnusedImports": "error",
+				"noVoidTypeReturn": "error"
+			},
+			"suspicious": {
+				"useAwait": "error"
 			}
 		}
 	},

@@ -29,8 +29,9 @@ test('getJVM returns correct options for Windows', async () => {
 });
 
 test('getJVM returns correct options for OSX', async () => {
-	mock.module('../../src/client/utils/system', () => ({
+	mock.module('../../../src/client/utils/system', () => ({
 		getOS: () => 'osx',
+		parseRule: () => false,
 	}));
 
 	const jvmOpt = await getJVM();
@@ -38,8 +39,9 @@ test('getJVM returns correct options for OSX', async () => {
 });
 
 test('getJVM returns correct options for Linux', async () => {
-	mock.module('../../src/client/utils/system', () => ({
+	mock.module('../../../src/client/utils/system', () => ({
 		getOS: () => 'linux',
+		parseRule: () => false,
 	}));
 
 	const jvmOpt = await getJVM();

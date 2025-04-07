@@ -21,7 +21,7 @@ export async function checkJava(java: string) {
 	}
 }
 
-export async function getJVM() {
+export function getJVM() {
 	const opts = {
 		windows:
 			'-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump',

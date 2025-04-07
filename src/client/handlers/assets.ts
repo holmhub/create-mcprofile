@@ -83,7 +83,7 @@ export async function getAssets(
 		});
 
 		await Promise.all(
-			Object.keys(index.objects).map(async (asset) => {
+			Object.keys(index.objects).map((asset) => {
 				const hash = index.objects[asset].hash;
 				const subhash = hash.substring(0, 2);
 				const subAsset = join(assetDirectory, 'objects', subhash);

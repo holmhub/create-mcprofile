@@ -53,7 +53,7 @@ export async function getClasses(
 	return libs;
 }
 
-export async function getModifyJson(options: ILauncherOptions) {
+export function getModifyJson(options: ILauncherOptions) {
 	if (!options.version.custom) return null;
 
 	const customVersionPath = join(
