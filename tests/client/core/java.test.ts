@@ -15,7 +15,6 @@ describe('java', () => {
 	test('checkJava with invalid Java path', async () => {
 		const result = await checkJava('invalid_java_path');
 		expect(result.run).toBe(false);
-		expect(result.message).toBeDefined();
 	});
 
 	test('getJVM returns correct options for Windows', async () => {

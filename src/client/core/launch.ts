@@ -34,10 +34,6 @@ export async function init(options: ILauncherOptions) {
 	};
 
 	const java = await checkJava(options.javaPath || 'java');
-	if (!java.run) {
-		client.emit('debug', `Couldn't start Minecraft due to: ${java.message}`);
-		client.emit('close', 1);
-	}
 
 	createRootDirectory(options);
 	createGameDirectory(options);
@@ -76,6 +72,20 @@ export async function init(options: ILauncherOptions) {
 	const modifyJson = await getModifyJson(options);
 
 	const args: string[] = [];
+	const minorVersion = getMinorVersion(versionFile.id);
+
+	// Version compatibility check for Java
+	if (
+		minorVersion < 6 &&
+		Number.parseInt(java.version?.split('.')[1] || '21') > 8
+	) {
+		client.emit(
+			'debug',
+			'Minecraft versions before 1.6 require Java 8. Please install and use Java 8 for this version.'
+		);
+		client.emit('close', 1);
+		return;
+	}
 
 	let jvm = [
 		'-XX:-UseAdaptiveSizePolicy',
@@ -87,7 +97,11 @@ export async function init(options: ILauncherOptions) {
 		`-Xms${getMemory(options)[1]}`,
 	];
 
-	const minorVersion = getMinorVersion(versionFile.id);
+	// Legacy versions (pre-1.6) use a different launch system
+	if (minorVersion < 6) {
+		jvm = jvm.filter((arg) => !arg.includes('fml.')); // Remove Forge args for very old versions
+		jvm.push('net.minecraft.client.Minecraft'); // Use direct main class
+	}
 
 	if (getOS() === 'osx') {
 		if (minorVersion > 12) {
