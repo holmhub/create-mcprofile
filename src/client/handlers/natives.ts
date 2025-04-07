@@ -1,91 +1,101 @@
 import { existsSync, mkdirSync, readdirSync, unlinkSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { client } from '..';
-import { customCheckSum, downloadAsync } from '../core/download';
+import { downloadAsync } from '../core/download';
 import type { IArtifact, ILauncherOptions, IVersionManifest } from '../types';
 import { unzipFile } from '../utils/compressor';
 import { getOS, parseRule } from '../utils/system';
+import { getMinorVersion } from './version';
 
-let counter = 0;
-
+/**
+ * Downloads and extracts native libraries for Minecraft
+ * @returns Path to the natives directory or root directory for newer versions
+ */
 export async function getNatives(
 	options: ILauncherOptions,
 	version: IVersionManifest,
-) {
+): Promise<string> {
 	const nativeDirectory = resolve(
 		options.overrides?.natives || join(options.root, 'natives', version.id),
 	);
 
-	if (Number.parseInt(version.id.split('.')[1] || '') >= 19)
+	// Skip natives extraction for Minecraft 1.19+ as they're bundled with the game
+	if (getMinorVersion(version.id) >= 19) {
 		return options.overrides?.cwd || options.root;
-
-	if (!existsSync(nativeDirectory) || !readdirSync(nativeDirectory).length) {
-		mkdirSync(nativeDirectory, { recursive: true });
-
-		const natives = async () => {
-			const natives: IArtifact[] = [];
-			await Promise.all(
-				version.libraries.map(async (lib) => {
-					if (!lib.downloads || !lib.downloads.classifiers) return;
-					if (parseRule(lib)) return;
-
-					const native =
-						getOS() === 'osx'
-							? lib.downloads.classifiers['natives-osx'] ||
-								lib.downloads.classifiers['natives-macos']
-							: lib.downloads.classifiers[`natives-${getOS()}`];
-					if (native) natives.push(native);
-				}),
-			);
-			return natives;
-		};
-		const stat = await natives();
-
-		client.emit('progress', {
-			type: 'natives',
-			task: 0,
-			total: stat.length,
-		});
-
-		await Promise.all(
-			stat.map(async (native) => {
-				if (!native) return;
-				const name = native.path.split('/').pop() as string;
-				const nativePath = join(nativeDirectory, name);
-
-				// Download the native file
-				await downloadAsync(native.url, nativeDirectory, name, true, 'natives');
-
-				// Verify checksum and redownload if needed
-				if (!(await customCheckSum(native.sha1, nativePath))) {
-					await downloadAsync(
-						native.url,
-						nativeDirectory,
-						name,
-						true,
-						'natives',
-					);
-				}
-
-				// Only try to unzip if the file exists
-				if (existsSync(nativePath)) {
-					await unzipFile(nativePath, nativeDirectory);
-					unlinkSync(nativePath);
-				}
-
-				counter++;
-				client.emit('progress', {
-					type: 'natives',
-					task: counter,
-					total: stat.length,
-				});
-			}),
-		);
-		client.emit('debug', 'Downloaded and extracted natives');
 	}
 
-	counter = 0;
-	client.emit('debug', `Set native path to ${nativeDirectory}`);
+	// Return existing natives if already extracted
+	if (existsSync(nativeDirectory) && readdirSync(nativeDirectory).length) {
+		return nativeDirectory;
+	}
+
+	const natives = collectNatives(version.libraries);
+	client.emit('progress', { type: 'natives', task: 0, total: natives.length });
+
+	mkdirSync(nativeDirectory, { recursive: true });
+	await processNatives(natives, nativeDirectory);
+	client.emit('debug', 'Downloaded and extracted natives');
 
 	return nativeDirectory;
+}
+
+function collectNatives(libraries: IVersionManifest['libraries']): IArtifact[] {
+	const OS = getOS();
+	// Use Map to deduplicate natives by URL
+	const natives = new Map<string, IArtifact>();
+
+	for (const lib of libraries) {
+		// Skip libraries without natives or those not matching current OS rules
+		if (!lib.downloads?.classifiers || parseRule(lib)) continue;
+
+		const native = getNativeClassifier(lib.downloads.classifiers, OS);
+		if (native) natives.set(native.url, native);
+	}
+
+	return [...natives.values()];
+}
+
+async function processNatives(
+	natives: IArtifact[],
+	nativeDirectory: string,
+): Promise<void> {
+	let task = 0;
+	await Promise.all(
+		natives.map(async (native) => {
+			await processNative(native, nativeDirectory);
+
+			client.emit('progress', {
+				type: 'natives',
+				task: ++task,
+				total: natives.length,
+			});
+		}),
+	);
+}
+
+function getNativeClassifier(
+	classifiers: Record<string, IArtifact>,
+	os: string,
+): IArtifact | undefined {
+	if (os === 'osx') {
+		return classifiers['natives-osx'] || classifiers['natives-macos'];
+	}
+	return classifiers[`natives-${os}`];
+}
+
+async function processNative(
+	native: IArtifact,
+	nativeDirectory: string,
+): Promise<void> {
+	const name = native.path.split('/').pop() as string;
+	const nativePath = join(nativeDirectory, name);
+
+	try {
+		await downloadAsync(native.url, nativeDirectory, name, true, 'natives');
+		await unzipFile(nativePath, nativeDirectory);
+		unlinkSync(nativePath);
+	} catch (error) {
+		client.emit('debug', `Failed to process native ${name}: ${error}`);
+		throw error;
+	}
 }
