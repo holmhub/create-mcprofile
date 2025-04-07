@@ -1,4 +1,4 @@
-import type { ILibrary } from '../types';
+import type { ILibrary } from '../types.ts';
 
 export function getOS() {
 	switch (process.platform) {

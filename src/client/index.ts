@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events';
-import { init } from './core/launch';
-import type { ILauncherOptions } from './types';
+import { init } from './core/launch.ts';
+import type { ILauncherOptions } from './types.ts';
 
 export const client = new EventEmitter();
 

@@ -1,5 +1,5 @@
-import { client } from '..';
-import type { ILauncherOptions } from '../types';
+import { client } from '../index.ts';
+import type { ILauncherOptions } from '../types.ts';
 
 export function getMemory(options: ILauncherOptions) {
 	if (!options.memory) {

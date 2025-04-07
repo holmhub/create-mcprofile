@@ -7,9 +7,9 @@ import {
 } from 'node:fs';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
-import { client } from '..';
-import { downloadAsync } from '../core/download';
-import type { ILauncherOptions, IVersionManifest } from '../types';
+import { downloadAsync } from '../core/download.ts';
+import { client } from '../index.ts';
+import type { ILauncherOptions, IVersionManifest } from '../types.ts';
 
 const writeFileAsync = promisify(writeFile);
 

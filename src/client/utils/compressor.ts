@@ -7,7 +7,7 @@ import {
 import { join } from 'node:path';
 import { Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
-import { client } from '..';
+import { client } from '../index.ts';
 
 export async function unzipFile(
 	inputPath: string,

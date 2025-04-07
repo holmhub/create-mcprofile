@@ -1,22 +1,22 @@
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { client } from '..';
-import { getAssets, isLegacy } from '../handlers/assets';
-import { getClasses, getModifyJson } from '../handlers/libraries';
-import { getNatives } from '../handlers/natives';
-import { getJar, getVersion } from '../handlers/version';
-import type { ILauncherOptions, IVersionManifest } from '../types';
+import { getAssets, isLegacy } from '../handlers/assets.ts';
+import { getClasses, getModifyJson } from '../handlers/libraries.ts';
+import { getNatives } from '../handlers/natives.ts';
+import { getJar, getVersion } from '../handlers/version.ts';
+import { client } from '../index.ts';
+import type { ILauncherOptions, IVersionManifest } from '../types.ts';
 import {
 	cleanUp,
 	createGameDirectory,
 	createRootDirectory,
 	extractPackage,
-} from '../utils/files';
-import { getMemory } from '../utils/memory';
-import { getOS } from '../utils/system';
-import { downloadAsync } from './download';
-import { checkJava, getJVM } from './java';
+} from '../utils/files.ts';
+import { getMemory } from '../utils/memory.ts';
+import { getOS } from '../utils/system.ts';
+import { downloadAsync } from './download.ts';
+import { checkJava, getJVM } from './java.ts';
 
 export async function init(options: ILauncherOptions) {
 	options.root = resolve(options.root);
@@ -105,29 +105,30 @@ export async function init(options: ILauncherOptions) {
 		jvm.push('-Dlog4j2.formatMsgNoLookups=true');
 	if (Number.parseInt(versionFile.id.split('.')[1] || '') === 17)
 		jvm.push('-Dlog4j2.formatMsgNoLookups=true');
-	if (Number.parseInt(versionFile.id.split('.')[1] || '') < 17) {
-		if (!jvm.find((arg) => arg.includes('Dlog4j.configurationFile'))) {
-			const configPath = resolve(options.overrides.cwd || options.root);
-			const intVersion = Number.parseInt(versionFile.id.split('.')[1] || '');
-			if (intVersion >= 12) {
-				await downloadAsync(
-					'https://launcher.mojang.com/v1/objects/02937d122c86ce73319ef9975b58896fc1b491d1/log4j2_112-116.xml',
-					configPath,
-					'log4j2_112-116.xml',
-					true,
-					'log4j',
-				);
-				jvm.push('-Dlog4j.configurationFile=log4j2_112-116.xml');
-			} else if (intVersion >= 7) {
-				await downloadAsync(
-					'https://launcher.mojang.com/v1/objects/dd2b723346a8dcd48e7f4d245f6bf09e98db9696/log4j2_17-111.xml',
-					configPath,
-					'log4j2_17-111.xml',
-					true,
-					'log4j',
-				);
-				jvm.push('-Dlog4j.configurationFile=log4j2_17-111.xml');
-			}
+	if (
+		Number.parseInt(versionFile.id.split('.')[1] || '') < 17 &&
+		!jvm.find((arg) => arg.includes('Dlog4j.configurationFile'))
+	) {
+		const configPath = resolve(options.overrides.cwd || options.root);
+		const intVersion = Number.parseInt(versionFile.id.split('.')[1] || '');
+		if (intVersion >= 12) {
+			await downloadAsync(
+				'https://launcher.mojang.com/v1/objects/02937d122c86ce73319ef9975b58896fc1b491d1/log4j2_112-116.xml',
+				configPath,
+				'log4j2_112-116.xml',
+				true,
+				'log4j',
+			);
+			jvm.push('-Dlog4j.configurationFile=log4j2_112-116.xml');
+		} else if (intVersion >= 7) {
+			await downloadAsync(
+				'https://launcher.mojang.com/v1/objects/dd2b723346a8dcd48e7f4d245f6bf09e98db9696/log4j2_17-111.xml',
+				configPath,
+				'log4j2_17-111.xml',
+				true,
+				'log4j',
+			);
+			jvm.push('-Dlog4j.configurationFile=log4j2_17-111.xml');
 		}
 	}
 
@@ -289,11 +290,8 @@ async function getLaunchOptions(
 				// Handle simple argument objects
 				replaceArg(arg, index);
 			}
-		} else if (typeof arg === 'string') {
-			// Replace template variables with actual values
-			if (arg in fields) {
-				args[index] = fields[arg as keyof typeof fields] as string;
-			}
+		} else if (typeof arg === 'string' && arg in fields) {
+			args[index] = fields[arg as keyof typeof fields] as string;
 		}
 	}
 	if (options.window) {

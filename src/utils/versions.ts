@@ -1,6 +1,6 @@
 import type { Interface } from 'node:readline';
-import { getFromInput } from './input';
-import type { VersionInfo, VersionManifest } from './types';
+import { getFromInput } from './input.ts';
+import type { VersionInfo, VersionManifest } from './types.ts';
 
 const VERSION_MANIFEST_URL =
 	'https://launchermeta.mojang.com/mc/game/version_manifest.json';

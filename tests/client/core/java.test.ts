@@ -1,6 +1,6 @@
 import { expect, test, mock, beforeEach } from 'bun:test';
-import { checkJava, getJVM } from '../../../src/client/core/java';
-import { client } from '../../../src/client';
+import { checkJava, getJVM } from '../../../src/client/core/java.ts';
+import { client } from '../../../src/client/index.ts';
 
 beforeEach(() => {
 	mock.restore();

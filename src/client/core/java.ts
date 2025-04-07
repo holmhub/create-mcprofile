@@ -1,6 +1,6 @@
 import { exec } from 'node:child_process';
-import { client } from '..';
-import { getOS } from '../utils/system';
+import { client } from '../index.ts';
+import { getOS } from '../utils/system.ts';
 
 export async function checkJava(java: string) {
 	try {

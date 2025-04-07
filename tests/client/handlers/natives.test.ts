@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test';
-import { getNatives } from '../../../src/client/handlers/natives';
-import type { IVersionManifest } from '../../../src/client/types';
+import { getNatives } from '../../../src/client/handlers/natives.ts';
+import type { IVersionManifest } from '../../../src/client/types.ts';
 
 // Mock file system operations
 mock.module('node:fs', () => ({
@@ -91,7 +91,7 @@ const mockVersion: IVersionManifest = {
 	],
 	logging: {
 		client: {
-			argument: '-Dlog4j.configurationFile=${path}',
+			argument: '',
 			file: {
 				id: 'client-1.12.xml',
 				sha1: 'bd65e7d2e3c237be76cfbef4c2405033d7f91521',

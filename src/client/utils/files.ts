@@ -1,8 +1,8 @@
 import { existsSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { client } from '..';
-import { downloadAndExtractPackage } from '../core/download';
-import type { ILauncherOptions } from '../types';
+import { downloadAndExtractPackage } from '../core/download.ts';
+import { client } from '../index.ts';
+import type { ILauncherOptions } from '../types.ts';
 
 export function createRootDirectory({ root }: ILauncherOptions): void {
 	if (existsSync(root)) return;

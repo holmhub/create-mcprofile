@@ -19,11 +19,29 @@
 	"linter": {
 		"enabled": true,
 		"rules": {
-			"recommended": true,
+			"all": true,
+			"a11y": {
+				"all": true
+			},
+			"complexity": {
+				"noExcessiveCognitiveComplexity": "off"
+			},
 			"correctness": {
+				"all": true,
+				"useImportExtensions": "error",
 				"noUnusedVariables": "error",
 				"noUnusedImports": "error",
-				"noVoidTypeReturn": "error"
+				"noVoidTypeReturn": "error",
+				"noNodejsModules": "off",
+				"noUndeclaredDependencies": "off"
+			},
+			"nursery": {
+				"all": true,
+				"useImportRestrictions": "off",
+				"noProcessEnv": "off",
+				"noCommonJs": "off",
+				"noSecrets": "off",
+				"useExplicitType": "off"
 			},
 			"performance": {
 				"all": true,

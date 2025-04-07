@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { IUser } from './types';
+import type { IUser } from './types.ts';
 
 export function getAuth(username: string): IUser {
 	const uuid = randomUUID();

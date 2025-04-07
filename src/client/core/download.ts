@@ -2,10 +2,10 @@ import { createHash } from 'node:crypto';
 import { createWriteStream, existsSync, mkdirSync, unlinkSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join, sep } from 'node:path';
-import { client } from '..';
-import type { ILauncherOptions, ILibrary } from '../types';
-import { unzipFile } from '../utils/compressor';
-import { parseRule } from '../utils/system';
+import { client } from '../index.ts';
+import type { ILauncherOptions, ILibrary } from '../types.ts';
+import { unzipFile } from '../utils/compressor.ts';
+import { parseRule } from '../utils/system.ts';
 
 let counter = 0;
 
@@ -143,14 +143,15 @@ export async function downloadToDirectory(
 				}
 			};
 
-			if (!existsSync(join(jarPath, name))) await downloadLibrary(library);
-			if (library.downloads?.artifact) {
-				if (
-					!customCheckSum(library.downloads.artifact.sha1, join(jarPath, name))
-				)
-					await downloadLibrary(library);
+			if (!existsSync(join(jarPath, name))) {
+				await downloadLibrary(library);
 			}
-
+			if (
+				library.downloads?.artifact &&
+				!customCheckSum(library.downloads.artifact.sha1, join(jarPath, name))
+			) {
+				await downloadLibrary(library);
+			}
 			counter++;
 			client.emit('progress', {
 				type: eventName,

@@ -7,12 +7,12 @@ import {
 } from 'node:fs';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
-import { launch } from './client';
-import { getAuth } from './client/auth';
-import { getFromInput } from './utils/input';
-import { handleProgress } from './utils/progress';
-import { selectFromList } from './utils/select';
-import { selectVersion } from './utils/versions';
+import { getAuth } from './client/auth.ts';
+import { launch } from './client/index.ts';
+import { getFromInput } from './utils/input.ts';
+import { handleProgress } from './utils/progress.ts';
+import { selectFromList } from './utils/select.ts';
+import { selectVersion } from './utils/versions.ts';
 
 const rl = createInterface({
 	input: process.stdin,

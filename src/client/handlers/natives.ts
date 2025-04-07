@@ -1,11 +1,15 @@
 import { existsSync, mkdirSync, readdirSync, unlinkSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { client } from '..';
-import { downloadAsync } from '../core/download';
-import type { IArtifact, ILauncherOptions, IVersionManifest } from '../types';
-import { unzipFile } from '../utils/compressor';
-import { getOS, parseRule } from '../utils/system';
-import { getMinorVersion } from './version';
+import { downloadAsync } from '../core/download.ts';
+import { client } from '../index.ts';
+import type {
+	IArtifact,
+	ILauncherOptions,
+	IVersionManifest,
+} from '../types.ts';
+import { unzipFile } from '../utils/compressor.ts';
+import { getOS, parseRule } from '../utils/system.ts';
+import { getMinorVersion } from './version.ts';
 
 /**
  * Downloads and extracts native libraries for Minecraft

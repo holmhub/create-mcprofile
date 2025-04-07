@@ -1,8 +1,8 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { client } from '..';
-import { customCheckSum, downloadAsync } from '../core/download';
-import type { ILauncherOptions, IVersionManifest } from '../types';
+import { customCheckSum, downloadAsync } from '../core/download.ts';
+import { client } from '../index.ts';
+import type { ILauncherOptions, IVersionManifest } from '../types.ts';
 
 let counter = 0;
 
@@ -43,8 +43,10 @@ export async function getAssets(
 			const subAsset = join(assetDirectory, 'objects', subhash);
 
 			if (
-				!existsSync(join(subAsset, hash)) ||
-				!(await customCheckSum(hash, join(subAsset, hash)))
+				!(
+					existsSync(join(subAsset, hash)) &&
+					(await customCheckSum(hash, join(subAsset, hash)))
+				)
 			) {
 				await downloadAsync(
 					`${options.overrides?.url?.resource}/${subhash}/${hash}`,

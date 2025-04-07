@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { client } from '..';
-import { downloadToDirectory } from '../core/download';
-import type { ILauncherOptions, IVersionManifest } from '../types';
-import { parseRule } from '../utils/system';
+import { downloadToDirectory } from '../core/download.ts';
+import { client } from '../index.ts';
+import type { ILauncherOptions, IVersionManifest } from '../types.ts';
+import { parseRule } from '../utils/system.ts';
 
 export async function getClasses(
 	classJson: IVersionManifest,
@@ -32,15 +32,14 @@ export async function getClasses(
 	}
 
 	const parsed = version.libraries.filter((lib) => {
-		if (lib.downloads?.artifact && !parseRule(lib)) {
-			if (
-				!classJson ||
-				!classJson.libraries.some(
-					(l) => l.name.split(':')[1] === lib.name.split(':')[1],
-				)
-			) {
-				return true;
-			}
+		if (
+			lib.downloads?.artifact &&
+			!parseRule(lib) &&
+			!classJson?.libraries.some(
+				(l) => l.name.split(':')[1] === lib.name.split(':')[1],
+			)
+		) {
+			return true;
 		}
 		return false;
 	});
