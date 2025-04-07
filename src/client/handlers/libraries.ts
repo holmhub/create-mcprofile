@@ -6,8 +6,7 @@ import type { ILauncherOptions, IVersionManifest } from '../types';
 import { parseRule } from '../utils/system';
 
 export async function getClasses(
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-	classJson: any,
+	classJson: IVersionManifest,
 	options: ILauncherOptions,
 	version: IVersionManifest,
 ) {
@@ -37,8 +36,7 @@ export async function getClasses(
 			if (
 				!classJson ||
 				!classJson.libraries.some(
-					// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-					(l: any) => l.name.split(':')[1] === lib.name.split(':')[1],
+					(l) => l.name.split(':')[1] === lib.name.split(':')[1],
 				)
 			) {
 				return true;

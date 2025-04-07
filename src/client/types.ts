@@ -253,6 +253,7 @@ export interface IVersionManifest {
 	minimumLauncherVersion: number;
 	mainClass: string;
 	libraries: ILibrary[];
+	mavenFiles: ILibrary[];
 	downloads: { client: { url: string } };
 	assetIndex: { url: string };
 	logging: {
