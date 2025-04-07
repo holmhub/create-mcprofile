@@ -140,7 +140,6 @@ async function main(): Promise<void> {
 	}
 
 	const launcher = launch({
-		clientPackage: undefined,
 		authorization: getAuth(username),
 		root: MC_PATH,
 		version: {
