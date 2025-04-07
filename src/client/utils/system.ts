@@ -1,31 +1,4 @@
-import { exec, spawn } from 'node:child_process';
-import { createHash } from 'node:crypto';
-import { EventEmitter } from 'node:events';
-import {
-	copyFileSync,
-	createReadStream,
-	createWriteStream,
-	existsSync,
-	mkdirSync,
-	readFileSync,
-	readdirSync,
-	unlinkSync,
-	writeFile,
-	writeFileSync,
-} from 'node:fs';
-import { readFile } from 'node:fs/promises';
-import { join, resolve, sep } from 'node:path';
-import { pipeline } from 'node:stream/promises';
-import { promisify } from 'node:util';
-import { createUnzip } from 'node:zlib';
-import { randomUUIDv7 } from 'bun';
-import type {
-	IArtifact,
-	ILauncherOptions,
-	ILibrary,
-	IUser,
-	IVersionManifest,
-} from '../types';
+import type { ILibrary } from '../types';
 
 export function getOS() {
 	switch (process.platform) {
