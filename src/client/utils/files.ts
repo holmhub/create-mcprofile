@@ -23,15 +23,15 @@ export function cleanUp<T>(array: T[] | Record<string, T>): T[] {
 	if (Array.isArray(array)) {
 		return [
 			...new Set(
-				array.filter((value): value is NonNullable<T> => value !== null),
+				array.filter((value): value is NonNullable<T> => value !== null)
 			),
 		];
 	}
 	return [
 		...new Set(
 			Object.values(array).filter(
-				(value): value is NonNullable<T> => value !== null,
-			),
+				(value): value is NonNullable<T> => value !== null
+			)
 		),
 	];
 }

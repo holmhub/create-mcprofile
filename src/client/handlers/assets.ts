@@ -8,10 +8,10 @@ let counter = 0;
 
 export async function getAssets(
 	options: ILauncherOptions,
-	version: IVersionManifest,
+	version: IVersionManifest
 ) {
 	const assetDirectory = resolve(
-		options.overrides?.assetRoot || join(options.root, 'assets'),
+		options.overrides?.assetRoot || join(options.root, 'assets')
 	);
 	const assetId = options.version.custom || options.version.number;
 	if (!existsSync(join(assetDirectory, 'indexes', `${assetId}.json`))) {
@@ -20,14 +20,14 @@ export async function getAssets(
 			join(assetDirectory, 'indexes'),
 			`${assetId}.json`,
 			true,
-			'asset-json',
+			'asset-json'
 		);
 	}
 
 	const index = JSON.parse(
 		readFileSync(join(assetDirectory, 'indexes', `${assetId}.json`), {
 			encoding: 'utf8',
-		}),
+		})
 	);
 
 	client.emit('progress', {
@@ -53,7 +53,7 @@ export async function getAssets(
 					subAsset,
 					hash,
 					true,
-					'assets',
+					'assets'
 				);
 			}
 			counter++;
@@ -62,7 +62,7 @@ export async function getAssets(
 				task: counter,
 				total: Object.keys(index.objects).length,
 			});
-		}),
+		})
 	);
 	counter = 0;
 
@@ -71,7 +71,7 @@ export async function getAssets(
 		if (existsSync(join(assetDirectory, 'legacy'))) {
 			client.emit(
 				'debug',
-				`The 'legacy' directory is no longer used as Minecraft looks for the resouces folder regardless of what is passed in the assetDirecotry launch option. I'd recommend removing the directory (${join(assetDirectory, 'legacy')})`,
+				`The 'legacy' directory is no longer used as Minecraft looks for the resouces folder regardless of what is passed in the assetDirecotry launch option. I'd recommend removing the directory (${join(assetDirectory, 'legacy')})`
 			);
 		}
 
@@ -108,7 +108,7 @@ export async function getAssets(
 					task: counter,
 					total: Object.keys(index.objects).length,
 				});
-			}),
+			})
 		);
 	}
 	counter = 0;

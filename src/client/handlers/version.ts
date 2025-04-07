@@ -14,7 +14,7 @@ import type { ILauncherOptions, IVersionManifest } from '../types.ts';
 const writeFileAsync = promisify(writeFile);
 
 export async function getVersion(
-	options: ILauncherOptions,
+	options: ILauncherOptions
 ): Promise<IVersionManifest> {
 	if (!options.directory) {
 		throw new Error('No version directory specified');
@@ -45,19 +45,19 @@ export async function getVersion(
 
 		await writeFileAsync(
 			join(cache, 'version_manifest.json'),
-			JSON.stringify(manifestData, null, 2),
+			JSON.stringify(manifestData, null, 2)
 		);
 		client.emit('debug', 'Cached version_manifest.json');
 
 		const desiredVersion = (
 			manifestData as { versions: Array<{ id: string; url: string }> }
 		).versions.find(
-			(version: { id: string }) => version.id === options.version.number,
+			(version: { id: string }) => version.id === options.version.number
 		);
 
 		if (!desiredVersion) {
 			throw new Error(
-				`Failed to find version ${options.version.number} in version_manifest.json`,
+				`Failed to find version ${options.version.number} in version_manifest.json`
 			);
 		}
 
@@ -66,7 +66,7 @@ export async function getVersion(
 
 		await writeFileAsync(
 			join(cache, `${options.version.number}.json`),
-			JSON.stringify(versionData, null, 2),
+			JSON.stringify(versionData, null, 2)
 		);
 		client.emit('debug', `Cached ${options.version.number}.json`);
 		client.emit('debug', 'Parsed version from version manifest');
@@ -82,7 +82,7 @@ export async function getVersion(
 			) {
 				JSON.parse(readFileSync(join(cache, 'version_manifest.json'), 'utf-8'));
 				const versionCache = JSON.parse(
-					readFileSync(join(cache, `${options.version.number}.json`), 'utf-8'),
+					readFileSync(join(cache, `${options.version.number}.json`), 'utf-8')
 				);
 				return versionCache;
 			}
@@ -95,7 +95,7 @@ export async function getVersion(
 
 export async function getJar(
 	options: ILauncherOptions,
-	version: IVersionManifest,
+	version: IVersionManifest
 ) {
 	if (!options.directory) {
 		client.emit('debug', 'No version directory specified');
@@ -106,11 +106,11 @@ export async function getJar(
 		options.directory,
 		`${options.version.custom ? options.version.custom : options.version.number}.jar`,
 		true,
-		'version-jar',
+		'version-jar'
 	);
 	writeFileSync(
 		join(options.directory, `${options.version.number}.json`),
-		JSON.stringify(version, null, 4),
+		JSON.stringify(version, null, 4)
 	);
 	return client.emit('debug', 'Downloaded version jar and wrote version json');
 }

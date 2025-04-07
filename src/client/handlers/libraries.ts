@@ -8,12 +8,12 @@ import { parseRule } from '../utils/system.ts';
 export async function getClasses(
 	classJson: IVersionManifest,
 	options: ILauncherOptions,
-	version: IVersionManifest,
+	version: IVersionManifest
 ) {
 	let libs: string[] = [];
 
 	const libraryDirectory = resolve(
-		options.overrides?.libraryRoot || join(options.root, 'libraries'),
+		options.overrides?.libraryRoot || join(options.root, 'libraries')
 	);
 
 	if (classJson) {
@@ -21,13 +21,13 @@ export async function getClasses(
 			await downloadToDirectory(
 				libraryDirectory,
 				classJson.mavenFiles,
-				'classes-maven-custom',
+				'classes-maven-custom'
 			);
 		}
 		libs = await downloadToDirectory(
 			libraryDirectory,
 			classJson.libraries,
-			'classes-custom',
+			'classes-custom'
 		);
 	}
 
@@ -36,7 +36,7 @@ export async function getClasses(
 			lib.downloads?.artifact &&
 			!parseRule(lib) &&
 			!classJson?.libraries.some(
-				(l) => l.name.split(':')[1] === lib.name.split(':')[1],
+				(l) => l.name.split(':')[1] === lib.name.split(':')[1]
 			)
 		) {
 			return true;
@@ -45,7 +45,7 @@ export async function getClasses(
 	});
 
 	libs = libs.concat(
-		await downloadToDirectory(libraryDirectory, parsed, 'classes'),
+		await downloadToDirectory(libraryDirectory, parsed, 'classes')
 	);
 
 	client.emit('debug', 'Collected class paths');
@@ -59,7 +59,7 @@ export function getModifyJson(options: ILauncherOptions) {
 		options.root,
 		'versions',
 		options.version.custom,
-		`${options.version.custom}.json`,
+		`${options.version.custom}.json`
 	);
 
 	client.emit('debug', 'Loading custom version file');

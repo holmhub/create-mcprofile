@@ -17,10 +17,10 @@ import { getMinorVersion } from './version.ts';
  */
 export async function getNatives(
 	options: ILauncherOptions,
-	version: IVersionManifest,
+	version: IVersionManifest
 ): Promise<string> {
 	const nativeDirectory = resolve(
-		options.overrides?.natives || join(options.root, 'natives', version.id),
+		options.overrides?.natives || join(options.root, 'natives', version.id)
 	);
 
 	// Skip natives extraction for Minecraft 1.19+ as they're bundled with the game
@@ -61,7 +61,7 @@ function collectNatives(libraries: IVersionManifest['libraries']): IArtifact[] {
 
 async function processNatives(
 	natives: IArtifact[],
-	nativeDirectory: string,
+	nativeDirectory: string
 ): Promise<void> {
 	let task = 0;
 	await Promise.all(
@@ -73,13 +73,13 @@ async function processNatives(
 				task: ++task,
 				total: natives.length,
 			});
-		}),
+		})
 	);
 }
 
 function getNativeClassifier(
 	classifiers: Record<string, IArtifact>,
-	os: string,
+	os: string
 ): IArtifact | undefined {
 	if (os === 'osx') {
 		return classifiers['natives-osx'] || classifiers['natives-macos'];
@@ -89,7 +89,7 @@ function getNativeClassifier(
 
 async function processNative(
 	native: IArtifact,
-	nativeDirectory: string,
+	nativeDirectory: string
 ): Promise<void> {
 	const name = native.path.split('/').pop() as string;
 	const nativePath = join(nativeDirectory, name);

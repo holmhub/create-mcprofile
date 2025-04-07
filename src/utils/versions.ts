@@ -23,7 +23,7 @@ async function getVersions(showAll = false): Promise<VersionInfo[]> {
 export async function selectVersion(
 	isSnapshot: boolean,
 	title: string,
-	rl: Interface,
+	rl: Interface
 ): Promise<VersionInfo> {
 	const versions = await getVersions(isSnapshot);
 

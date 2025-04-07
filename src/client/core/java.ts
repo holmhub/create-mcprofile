@@ -9,7 +9,7 @@ export async function checkJava(java: string) {
 				exec(`"${java}" -version`, (error, _, stderr = '') => {
 					if (error) reject(error);
 					resolve({ stderr });
-				}),
+				})
 		);
 
 		const version = stderr.match(/"(.*?)"/)?.[1];

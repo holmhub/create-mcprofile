@@ -23,7 +23,7 @@ const MC_PATH = join(process.env.APPDATA || '', '.minecraft');
 const PROFILES_PATH = join(
 	process.env.APPDATA || '',
 	'ModrinthApp',
-	'profiles',
+	'profiles'
 );
 
 function getFolders(folder: string): string[] {
@@ -49,7 +49,7 @@ async function main(): Promise<void> {
 	const defaultUsername = process.env.USERNAME || 'Player';
 	const usernameInput = await getFromInput(
 		`Enter username (press Enter for ${defaultUsername}): `,
-		rl,
+		rl
 	);
 	const username = usernameInput.trim() || defaultUsername;
 
@@ -78,7 +78,7 @@ async function main(): Promise<void> {
 	} else {
 		selectedProfile = await getFromInput(
 			'No profiles found. Enter new profile name: ',
-			rl,
+			rl
 		);
 		mkdirSync(join(PROFILES_PATH, selectedProfile), { recursive: true });
 	}
@@ -86,7 +86,7 @@ async function main(): Promise<void> {
 	const configPath = join(
 		PROFILES_PATH,
 		selectedProfile,
-		`${selectedProfile}.json`,
+		`${selectedProfile}.json`
 	);
 	if (existsSync(configPath)) {
 		profileConfig = JSON.parse(readFileSync(configPath, 'utf-8'));
@@ -100,7 +100,7 @@ async function main(): Promise<void> {
 			const allOptions = [...modLoaders, 'Vanilla'];
 			const selectedIndex = await selectFromList(
 				allOptions,
-				'Select mod loader',
+				'Select mod loader'
 			);
 
 			if (selectedIndex !== modLoaders.length) {
@@ -116,7 +116,7 @@ async function main(): Promise<void> {
 		const versionTypes = ['Release', 'Snapshot'];
 		const versionTypeIndex = await selectFromList(
 			versionTypes,
-			'Select version type',
+			'Select version type'
 		);
 		const isSnapshot = versionTypeIndex === 1;
 
@@ -124,7 +124,7 @@ async function main(): Promise<void> {
 		const selectedVersion = await selectVersion(
 			isSnapshot,
 			'Select version',
-			rl,
+			rl
 		);
 
 		profileConfig.version.id = selectedVersion.id;
@@ -134,7 +134,7 @@ async function main(): Promise<void> {
 		// Save profile configuration
 		writeFileSync(
 			join(PROFILES_PATH, selectedProfile, `${selectedProfile}.json`),
-			JSON.stringify(profileConfig, null, 2),
+			JSON.stringify(profileConfig, null, 2)
 		);
 	}
 

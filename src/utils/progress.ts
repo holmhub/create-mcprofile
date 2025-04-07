@@ -11,7 +11,7 @@ export const handleProgress = (e: DownloadProgress): void => {
 	const bar = '█'.repeat(filled) + '░'.repeat(width - filled);
 
 	process.stdout.write(
-		`\r${e.type} [${bar}] ${percent}% | ${e.task}/${e.total} files`,
+		`\r${e.type} [${bar}] ${percent}% | ${e.task}/${e.total} files`
 	);
 
 	if (percent === 100) {

@@ -2,7 +2,7 @@ import { emitKeypressEvents } from 'node:readline';
 
 export async function selectFromList(
 	items: string[],
-	title: string,
+	title: string
 ): Promise<number> {
 	if (!Array.isArray(items)) {
 		throw new Error('Items must be an array');
@@ -42,7 +42,7 @@ export async function selectFromList(
 
 		const keypressHandler = (
 			_: string,
-			key: { name: string; ctrl: boolean },
+			key: { name: string; ctrl: boolean }
 		) => {
 			if (key.name === 'up' && selectedIndex > 0) {
 				selectedIndex--;

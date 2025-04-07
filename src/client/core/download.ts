@@ -15,7 +15,7 @@ export async function downloadAsync(
 	name: string,
 	retry: boolean,
 	type: string,
-	timeoutms = 50000,
+	timeoutms = 50000
 ): Promise<void> {
 	const filePath = join(directory, name);
 
@@ -34,7 +34,7 @@ export async function downloadAsync(
 			if (response.status === 404) {
 				client.emit(
 					'debug',
-					`Failed to download ${url} due to: File not found...`,
+					`Failed to download ${url} due to: File not found...`
 				);
 				return;
 			}
@@ -84,7 +84,7 @@ export async function downloadAndExtractPackage(options: ILauncherOptions) {
 			root,
 			'clientPackage.zip',
 			true,
-			'client-package',
+			'client-package'
 		);
 		options.clientPackage = join(root, 'clientPackage.zip');
 	}
@@ -98,7 +98,7 @@ export async function downloadAndExtractPackage(options: ILauncherOptions) {
 export async function downloadToDirectory(
 	directory: string,
 	libraries: ILibrary[],
-	eventName: string,
+	eventName: string
 ) {
 	const libs: string[] = [];
 
@@ -117,13 +117,13 @@ export async function downloadToDirectory(
 					] || '';
 				jarPath = join(
 					directory,
-					library.downloads.artifact.path.split('/').slice(0, -1).join('/'),
+					library.downloads.artifact.path.split('/').slice(0, -1).join('/')
 				);
 			} else {
 				name = `${lib[1]}-${lib[2]}${lib[3] ? `-${lib[3]}` : ''}.jar`;
 				jarPath = join(
 					directory,
-					`${(lib[0] || '').replace(/\./g, '/')}/${lib[1]}/${lib[2]}`,
+					`${(lib[0] || '').replace(/\./g, '/')}/${lib[1]}/${lib[2]}`
 				);
 			}
 
@@ -138,7 +138,7 @@ export async function downloadToDirectory(
 						jarPath,
 						name,
 						true,
-						eventName,
+						eventName
 					);
 				}
 			};
@@ -159,7 +159,7 @@ export async function downloadToDirectory(
 				total: libraries.length,
 			});
 			libs.push(`${jarPath}${sep}${name}`);
-		}),
+		})
 	);
 	counter = 0;
 
@@ -168,7 +168,7 @@ export async function downloadToDirectory(
 
 export async function customCheckSum(
 	hash: string,
-	filename: string,
+	filename: string
 ): Promise<boolean> {
 	try {
 		const buffer = await readFile(filename);

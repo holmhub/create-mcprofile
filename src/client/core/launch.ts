@@ -49,7 +49,7 @@ export async function init(options: ILauncherOptions) {
 		join(
 			options.root,
 			'versions',
-			options.version.custom ? options.version.custom : options.version.number,
+			options.version.custom ? options.version.custom : options.version.number
 		);
 	options.directory = directory;
 
@@ -62,7 +62,7 @@ export async function init(options: ILauncherOptions) {
 					options.root,
 					'versions',
 					options.version.custom,
-					`${options.version.custom}.jar`,
+					`${options.version.custom}.jar`
 				)
 			: join(directory, `${options.version.number}.jar`));
 	options.mcPath = mcPath;
@@ -94,7 +94,7 @@ export async function init(options: ILauncherOptions) {
 	if (options.customArgs) jvm = jvm.concat(options.customArgs);
 	if (options.overrides.logj4ConfigurationFile) {
 		jvm.push(
-			`-Dlog4j.configurationFile=${resolve(options.overrides.logj4ConfigurationFile)}`,
+			`-Dlog4j.configurationFile=${resolve(options.overrides.logj4ConfigurationFile)}`
 		);
 	}
 	// https://help.minecraft.net/hc/en-us/articles/4416199399693-Security-Vulnerability-in-Minecraft-Java-Edition
@@ -117,7 +117,7 @@ export async function init(options: ILauncherOptions) {
 				configPath,
 				'log4j2_112-116.xml',
 				true,
-				'log4j',
+				'log4j'
 			);
 			jvm.push('-Dlog4j.configurationFile=log4j2_112-116.xml');
 		} else if (intVersion >= 7) {
@@ -126,7 +126,7 @@ export async function init(options: ILauncherOptions) {
 				configPath,
 				'log4j2_17-111.xml',
 				true,
-				'log4j',
+				'log4j'
 			);
 			jvm.push('-Dlog4j.configurationFile=log4j2_17-111.xml');
 		}
@@ -145,7 +145,7 @@ export async function init(options: ILauncherOptions) {
 		? `${separator}${mcPath}`
 		: `${separator}${join(directory, `${options.version.number}.jar`)}`;
 	classPaths.push(
-		`${options.forge ? options.forge + separator : ''}${classes.join(separator)}${jar}`,
+		`${options.forge ? options.forge + separator : ''}${classes.join(separator)}${jar}`
 	);
 	classPaths.push(file.mainClass);
 
@@ -156,11 +156,11 @@ export async function init(options: ILauncherOptions) {
 	const launchOptions = await getLaunchOptions(
 		modifyJson,
 		options,
-		versionFile,
+		versionFile
 	);
 
 	const stringArgs = launchOptions.map((arg) =>
-		typeof arg === 'string' ? arg : String(arg),
+		typeof arg === 'string' ? arg : String(arg)
 	);
 	const launchArguments = args.concat(jvm, classPaths, stringArgs);
 
@@ -176,13 +176,13 @@ function startMinecraft(launchArguments: string[], options: ILauncherOptions) {
 		{
 			cwd: options.overrides?.cwd || options.root,
 			detached: options.overrides?.detached,
-		},
+		}
 	);
 	minecraft.stdout.on('data', (data) =>
-		client.emit('data', data.toString('utf-8')),
+		client.emit('data', data.toString('utf-8'))
 	);
 	minecraft.stderr.on('data', (data) =>
-		client.emit('data', data.toString('utf-8')),
+		client.emit('data', data.toString('utf-8'))
 	);
 	minecraft.on('close', (code) => client.emit('close', code));
 	return minecraft;
@@ -191,7 +191,7 @@ function startMinecraft(launchArguments: string[], options: ILauncherOptions) {
 async function getLaunchOptions(
 	modification: IVersionManifest,
 	options: ILauncherOptions,
-	version: IVersionManifest,
+	version: IVersionManifest
 ) {
 	const type = Object.assign({}, version, modification);
 
@@ -199,7 +199,7 @@ async function getLaunchOptions(
 		? type.minecraftArguments.split(' ')
 		: type.arguments.game;
 	const assetRoot = resolve(
-		options.overrides?.assetRoot || join(options.root, 'assets'),
+		options.overrides?.assetRoot || join(options.root, 'assets')
 	);
 	const assetPath = isLegacy(version)
 		? join(options.root, 'resources')
@@ -210,7 +210,7 @@ async function getLaunchOptions(
 		args = args.concat(
 			version.minecraftArguments
 				? version.minecraftArguments.split(' ')
-				: version.arguments.game,
+				: version.arguments.game
 		);
 	if (options.customLaunchArgs) args = args.concat(options.customLaunchArgs);
 
@@ -255,7 +255,7 @@ async function getLaunchOptions(
 		obj: {
 			value: string | string[];
 		},
-		index: number,
+		index: number
 	) => {
 		if (Array.isArray(obj.value)) {
 			for (const arg of obj.value) {
@@ -276,11 +276,11 @@ async function getLaunchOptions(
 				if (options.features?.length === 0) continue;
 
 				const requiredFeatures = arg.rules.flatMap((rule) =>
-					rule.features ? Object.keys(rule.features) : [],
+					rule.features ? Object.keys(rule.features) : []
 				);
 
 				const hasAllRequiredFeatures = options.features?.every((feature) =>
-					requiredFeatures.includes(feature),
+					requiredFeatures.includes(feature)
 				);
 
 				if (hasAllRequiredFeatures) {
@@ -307,7 +307,7 @@ async function getLaunchOptions(
 	if (options.server)
 		client.emit(
 			'debug',
-			'server and port are deprecated launch flags. Use the quickPlay field.',
+			'server and port are deprecated launch flags. Use the quickPlay field.'
 		);
 	if (options.quickPlay) {
 		const quickPlayArgs = formatQuickPlay(options);
@@ -324,11 +324,11 @@ async function getLaunchOptions(
 			'--proxyUser',
 			options.proxy.username || '',
 			'--proxyPass',
-			options.proxy.password || '',
+			options.proxy.password || ''
 		);
 	}
 	args = args.filter(
-		(value) => typeof value === 'string' || typeof value === 'number',
+		(value) => typeof value === 'string' || typeof value === 'number'
 	);
 	client.emit('debug', '🚀 Launching Minecraft...');
 	return args;
@@ -350,7 +350,7 @@ function formatQuickPlay(options: ILauncherOptions): string[] | undefined {
 	if (!keys.includes(type)) {
 		client.emit(
 			'debug',
-			`quickPlay type is not valid. Valid types are: ${keys.join(', ')}`,
+			`quickPlay type is not valid. Valid types are: ${keys.join(', ')}`
 		);
 		return;
 	}
@@ -364,7 +364,7 @@ function formatQuickPlay(options: ILauncherOptions): string[] | undefined {
 	const returnArgs: string[] = isLegacyServer
 		? ['--server', serverHost, '--port', serverPort]
 		: [quickPlayType, identifier].filter(
-				(arg): arg is string => arg !== '' && arg !== null,
+				(arg): arg is string => arg !== '' && arg !== null
 			);
 
 	if (path) {

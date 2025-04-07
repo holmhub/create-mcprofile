@@ -11,7 +11,7 @@ import { client } from '../index.ts';
 
 export async function unzipFile(
 	inputPath: string,
-	outputPath: string,
+	outputPath: string
 ): Promise<void> {
 	try {
 		if (!existsSync(inputPath)) {
@@ -31,16 +31,16 @@ export async function unzipFile(
 
 					while (currentBuffer.length >= 4) {
 						const headerIndex = currentBuffer.indexOf(
-							Buffer.from([0x50, 0x4b, 0x03, 0x04]),
+							Buffer.from([0x50, 0x4b, 0x03, 0x04])
 						);
 						if (headerIndex === -1) break;
 
 						if (currentBuffer.length >= headerIndex + 30) {
 							const compressionMethod = currentBuffer.readUInt16LE(
-								headerIndex + 8,
+								headerIndex + 8
 							);
 							const compressedSize = currentBuffer.readUInt32LE(
-								headerIndex + 18,
+								headerIndex + 18
 							);
 							currentBuffer.readUInt32LE(headerIndex + 22);
 							const nameLength = currentBuffer.readUInt16LE(headerIndex + 26);
@@ -54,14 +54,14 @@ export async function unzipFile(
 								.toString();
 							const compressedData = currentBuffer.slice(
 								headerSize,
-								headerSize + compressedSize,
+								headerSize + compressedSize
 							);
 
 							if (!fileName.endsWith('/')) {
 								const entryPath = join(outputPath, fileName);
 								const entryDir = join(
 									outputPath,
-									fileName.split('/').slice(0, -1).join('/'),
+									fileName.split('/').slice(0, -1).join('/')
 								);
 								mkdirSync(entryDir, { recursive: true });
 
