@@ -4,7 +4,11 @@ import { join, resolve } from 'node:path';
 import { getAssets, isLegacy } from '../handlers/assets.ts';
 import { getClasses, getModifyJson } from '../handlers/libraries.ts';
 import { getNatives } from '../handlers/natives.ts';
-import { getJar, parseVersion, getVersion } from '../handlers/version.ts';
+import {
+	getJar,
+	parseVersion,
+	getVersionManifest,
+} from '../handlers/version.ts';
 import { client } from '../index.ts';
 import type { ILauncherOptions, IVersionManifest } from '../types.ts';
 import {
@@ -49,7 +53,7 @@ export async function init(options: ILauncherOptions) {
 		);
 	options.directory = directory;
 
-	const versionFile = await getVersion(options);
+	const versionFile = await getVersionManifest(options);
 
 	const mcPath =
 		options.overrides.minecraftJar ||

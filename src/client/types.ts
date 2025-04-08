@@ -325,3 +325,17 @@ export type NativePlatform =
 	| 'natives-windows'
 	| 'natives-windows-arm64'
 	| 'natives-windows-x86';
+
+export interface VersionManifestResponse {
+	versions: Version[];
+}
+
+export interface Version {
+	id: string; // e.g., "1.21.2", "24w14a"
+	type: VersionType; // "release" or "snapshot"
+	url: string; // URL to version's JSON file
+	time: string; // Last modified time
+	releaseTime: string; // Initial release time
+}
+
+export type VersionType = 'release' | 'snapshot';
