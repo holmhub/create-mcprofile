@@ -7,92 +7,163 @@ import {
 import { join } from 'node:path';
 import { Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
+import { inflateRawSync } from 'node:zlib';
 import { client } from '../index.ts';
 
+interface ZipHeader {
+	compressionMethod: number;
+	compressedSize: number;
+	nameLength: number;
+	extraLength: number;
+	headerSize: number;
+	fileName: string;
+}
+
+const ZIP_HEADER_MAGIC = Buffer.from([0x50, 0x4b, 0x03, 0x04]);
+const ZIP_HEADER_SIZE = 30;
+const COMPRESSION = {
+	STORED: 0,
+	DEFLATE: 8,
+} as const;
+
+const ERRORS = {
+	FILE_NOT_FOUND: (path: string) => `Input file does not exist: ${path}`,
+	UNZIP_FAILED: (error: unknown) => `Failed to unzip file: ${error}`,
+	INVALID_COMPRESSION: (method: number) =>
+		`Unsupported compression method: ${method}`,
+};
+
+/**
+ * Extracts a ZIP file to the specified directory
+ * @throws If file doesn't exist or extraction fails
+ */
 export async function unzipFile(
 	inputPath: string,
 	outputPath: string
 ): Promise<void> {
+	if (!existsSync(inputPath)) {
+		const error = ERRORS.FILE_NOT_FOUND(inputPath);
+		client.emit('debug', error);
+		throw new Error(error);
+	}
+
 	try {
-		if (!existsSync(inputPath)) {
-			client.emit('debug', `Input file does not exist: ${inputPath}`);
-			return;
-		}
-
 		mkdirSync(outputPath, { recursive: true });
-
-		const input = createReadStream(inputPath);
-		let currentBuffer = Buffer.alloc(0);
-
-		const transform = new Transform({
-			transform(chunk, _encoding, callback) {
-				try {
-					currentBuffer = Buffer.concat([currentBuffer, chunk]);
-
-					while (currentBuffer.length >= 4) {
-						const headerIndex = currentBuffer.indexOf(
-							Buffer.from([0x50, 0x4b, 0x03, 0x04])
-						);
-						if (headerIndex === -1) break;
-
-						if (currentBuffer.length >= headerIndex + 30) {
-							const compressionMethod = currentBuffer.readUInt16LE(
-								headerIndex + 8
-							);
-							const compressedSize = currentBuffer.readUInt32LE(
-								headerIndex + 18
-							);
-							currentBuffer.readUInt32LE(headerIndex + 22);
-							const nameLength = currentBuffer.readUInt16LE(headerIndex + 26);
-							const extraLength = currentBuffer.readUInt16LE(headerIndex + 28);
-
-							const headerSize = headerIndex + 30 + nameLength + extraLength;
-							if (currentBuffer.length < headerSize + compressedSize) break;
-
-							const fileName = currentBuffer
-								.slice(headerIndex + 30, headerIndex + 30 + nameLength)
-								.toString();
-							const compressedData = currentBuffer.slice(
-								headerSize,
-								headerSize + compressedSize
-							);
-
-							if (!fileName.endsWith('/')) {
-								const entryPath = join(outputPath, fileName);
-								const entryDir = join(
-									outputPath,
-									fileName.split('/').slice(0, -1).join('/')
-								);
-								mkdirSync(entryDir, { recursive: true });
-
-								const writer = createWriteStream(entryPath);
-								if (compressionMethod === 0) {
-									// Stored (no compression)
-									writer.write(compressedData);
-								} else if (compressionMethod === 8) {
-									// Deflate compression
-									const inflated =
-										require('node:zlib').inflateRawSync(compressedData);
-									writer.write(inflated);
-								}
-								writer.end();
-							}
-
-							currentBuffer = currentBuffer.slice(headerSize + compressedSize);
-						} else {
-							break;
-						}
-					}
-					callback();
-				} catch (error) {
-					callback(error as Error);
-				}
-			},
-		});
-
-		await pipeline(input, transform);
+		await pipeline(createReadStream(inputPath), createZipTransform(outputPath));
 	} catch (error) {
-		client.emit('debug', `Failed to unzip file: ${error}`);
-		throw error;
+		const message = ERRORS.UNZIP_FAILED(error);
+		client.emit('debug', message);
+		throw new Error(message);
 	}
 }
+
+function createZipTransform(outputPath: string): Transform {
+	let currentBuffer = Buffer.alloc(0);
+
+	return new Transform({
+		transform(chunk, _encoding, callback) {
+			try {
+				currentBuffer = Buffer.concat([currentBuffer, chunk]);
+				processZipEntries(currentBuffer, outputPath);
+				callback();
+			} catch (error) {
+				callback(error as Error);
+			}
+		},
+	});
+}
+
+function parseZipHeader(buffer: Buffer, headerIndex: number): ZipHeader | null {
+	if (buffer.length < headerIndex + ZIP_HEADER_SIZE) return null;
+
+	const nameLength = buffer.readUInt16LE(headerIndex + 26);
+	const extraLength = buffer.readUInt16LE(headerIndex + 28);
+	const headerSize = headerIndex + ZIP_HEADER_SIZE + nameLength + extraLength;
+
+	return {
+		compressionMethod: buffer.readUInt16LE(headerIndex + 8),
+		compressedSize: buffer.readUInt32LE(headerIndex + 18),
+		nameLength,
+		extraLength,
+		headerSize,
+		fileName: buffer
+			.subarray(
+				headerIndex + ZIP_HEADER_SIZE,
+				headerIndex + ZIP_HEADER_SIZE + nameLength
+			)
+			.toString(),
+	};
+}
+
+function processZipEntries(buffer: Buffer, outputPath: string): void {
+	let currentPosition = 0;
+
+	while (buffer.length - currentPosition >= ZIP_HEADER_SIZE) {
+		const headerIndex = buffer.indexOf(ZIP_HEADER_MAGIC, currentPosition);
+		if (headerIndex === -1) break;
+
+		const header = parseZipHeader(buffer, headerIndex);
+		if (!header || buffer.length < header.headerSize + header.compressedSize) {
+			break;
+		}
+
+		if (!header.fileName.endsWith('/')) {
+			extractZipEntry(
+				buffer.subarray(
+					header.headerSize,
+					header.headerSize + header.compressedSize
+				),
+				header,
+				outputPath
+			);
+		}
+
+		currentPosition = header.headerSize + header.compressedSize;
+	}
+}
+
+function extractZipEntry(
+	compressedData: Buffer,
+	header: ZipHeader,
+	outputPath: string
+): void {
+	const entryPath = join(outputPath, header.fileName);
+	const entryDir = join(
+		outputPath,
+		header.fileName.split('/').slice(0, -1).join('/')
+	);
+
+	mkdirSync(entryDir, { recursive: true });
+	const writer = createWriteStream(entryPath);
+
+	switch (header.compressionMethod) {
+		case COMPRESSION.STORED:
+			writer.write(compressedData);
+			break;
+		case COMPRESSION.DEFLATE:
+			writer.write(inflateRawSync(compressedData));
+			break;
+		default:
+			throw new Error(ERRORS.INVALID_COMPRESSION(header.compressionMethod));
+	}
+
+	writer.end();
+}
+
+// (async () => {
+// 	const { rmSync } = await import('node:fs');
+// 	rmSync('out/natives', { recursive: true, force: true });
+// 	client.on('debug', console.log);
+// 	client.on('data', console.log);
+// 	const { handleProgress } = await import('@/utils/progress.ts');
+// 	client.on('progress', handleProgress);
+// 	const { initializeLauncherOptions } = await import('@/client/core/launch.ts');
+// 	const options = initializeLauncherOptions({
+// 		root: 'out',
+// 		version: { number: '1.7.5' },
+// 	});
+// 	const { getVersionManifest } = await import('@/client/handlers/version.ts');
+// 	const manifest = await getVersionManifest(options);
+// 	const { getNatives } = await import('@/client/handlers/natives.ts');
+// 	getNatives(options, manifest);
+// })();
