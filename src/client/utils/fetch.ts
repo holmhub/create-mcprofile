@@ -1,4 +1,4 @@
-import { withRetry } from './retry.ts';
+import { withRetry } from './other.ts';
 
 /**
  * Fetches and parses JSON data from a given URL

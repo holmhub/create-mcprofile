@@ -1,37 +1,41 @@
 import type { ILibrary } from '../types.ts';
 
-export function getOS() {
-	switch (process.platform) {
-		case 'win32':
-			return 'windows';
-		case 'darwin':
-			return 'osx';
-		default:
-			return 'linux';
-	}
+const OS_MAP = {
+	win32: 'windows',
+	darwin: 'osx',
+	linux: 'linux',
+} as const;
+
+type SupportedOS = (typeof OS_MAP)[keyof typeof OS_MAP];
+
+/**
+ * Gets the current operating system name in Minecraft format
+ */
+export function getOS(): SupportedOS {
+	return OS_MAP[process.platform as keyof typeof OS_MAP] || 'linux';
 }
 
+/**
+ * Determines if a library should be excluded based on its rules
+ * @returns true if library should be excluded, false if it should be included
+ */
 export function parseRule(lib: ILibrary): boolean {
-	if (!lib.rules) return false;
+	if (!lib.rules || lib.rules.length === 0) return false;
 
-	// Default to allow if no rules present
-	let allowed = lib.rules.length === 0;
+	let allowed = false;
+	const currentOS = getOS();
 
 	for (const rule of lib.rules) {
-		if (rule.os) {
-			// Check if OS matches
-			const osMatches = rule.os.name === getOS();
-
-			// If OS matches and action is allow, set allowed to true
-			// If OS matches and action is disallow, set allowed to false
-			if (osMatches) {
-				allowed = rule.action === 'allow';
-			}
-		} else {
-			// No OS specified, apply rule globally
+		if (!rule.os) {
 			allowed = rule.action === 'allow';
+			continue;
+		}
+
+		if (rule.os.name === currentOS) {
+			allowed = rule.action === 'allow';
+			break; // OS-specific rule found, no need to check further
 		}
 	}
 
-	return !allowed; // Return true if library should be excluded
+	return !allowed;
 }
