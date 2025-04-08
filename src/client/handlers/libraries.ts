@@ -5,6 +5,11 @@ import type { ILauncherOptions, ILibrary, IVersionManifest } from '../types.ts';
 import { getErrorMessage } from '../utils/other.ts';
 import { parseRule } from '../utils/system.ts';
 
+/**
+ * Downloads and collects all required libraries for Minecraft
+ * Handles both custom (Forge/Fabric) and vanilla Minecraft libraries
+ * @returns Array of paths to downloaded library files
+ */
 export async function getClasses(
 	options: ILauncherOptions,
 	version: IVersionManifest,
