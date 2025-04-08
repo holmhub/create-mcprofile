@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
 import { downloadAsync } from '../core/download.ts';
 import { client } from '../index.ts';
 import type {
@@ -169,45 +169,45 @@ async function getVersionsManifest(
 	);
 }
 
-/**
- * Test Case: bun run --hot src/client/handlers/version.ts
- */
-(async () => {
-	client.on('debug', console.log);
-	client.on('data', console.log);
-	client.on('progress', console.log);
+// /**
+//  * Test Case: bun run --hot src/client/handlers/version.ts
+//  */
+// (async () => {
+// 	client.on('debug', console.log);
+// 	client.on('data', console.log);
+// 	client.on('progress', console.log);
 
-	const options: ILauncherOptions = {
-		root: resolve('out'),
-		version: {
-			number: '1.20.1',
-			type: '',
-			custom: undefined,
-		},
-		memory: {
-			max: '',
-			min: '',
-		},
-		directory: join('out', 'versions', '1.20.1'),
-		authorization: {
-			access_token: '',
-			client_token: '',
-			uuid: '',
-			name: '',
-			user_properties: '',
-		},
-		overrides: {
-			detached: true,
-			url: {
-				meta: 'https://launchermeta.mojang.com',
-				resource: 'https://resources.download.minecraft.net',
-				mavenForge: 'https://files.minecraftforge.net/maven/',
-				defaultRepoForge: 'https://libraries.minecraft.net/',
-				fallbackMaven: 'https://search.maven.org/remotecontent?filepath=',
-			},
-		},
-	};
+// 	const options: ILauncherOptions = {
+// 		root: resolve('out'),
+// 		version: {
+// 			number: '1.20.1',
+// 			type: '',
+// 			custom: undefined,
+// 		},
+// 		memory: {
+// 			max: '',
+// 			min: '',
+// 		},
+// 		directory: join('out', 'versions', '1.20.1'),
+// 		authorization: {
+// 			access_token: '',
+// 			client_token: '',
+// 			uuid: '',
+// 			name: '',
+// 			user_properties: '',
+// 		},
+// 		overrides: {
+// 			detached: true,
+// 			url: {
+// 				meta: 'https://launchermeta.mojang.com',
+// 				resource: 'https://resources.download.minecraft.net',
+// 				mavenForge: 'https://files.minecraftforge.net/maven/',
+// 				defaultRepoForge: 'https://libraries.minecraft.net/',
+// 				fallbackMaven: 'https://search.maven.org/remotecontent?filepath=',
+// 			},
+// 		},
+// 	};
 
-	const version = await getVersionManifest(options);
-	await getJar(options, version);
-})();
+// 	const version = await getVersionManifest(options);
+// 	await getJar(options, version);
+// })();
