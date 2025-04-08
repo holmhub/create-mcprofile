@@ -22,8 +22,11 @@ import { getOS } from '../utils/system.ts';
 import { downloadAsync } from './download.ts';
 import { checkJava, getJVM } from './java.ts';
 
-export async function init(options: ILauncherOptions) {
+export function initializeLauncherOptions(
+	options: ILauncherOptions
+): ILauncherOptions {
 	options.root = resolve(options.root);
+
 	options.overrides = {
 		detached: true,
 		...options.overrides,
@@ -37,25 +40,15 @@ export async function init(options: ILauncherOptions) {
 		},
 	};
 
-	const java = await checkJava(options.javaPath || 'java');
-
-	createRootDirectory(options);
-	createGameDirectory(options);
-
-	extractPackage(options);
-
-	const directory =
+	options.directory =
 		options.overrides.directory ||
 		join(
 			options.root,
 			'versions',
-			options.version.custom ? options.version.custom : options.version.number
+			options.version.custom || options.version.number
 		);
-	options.directory = directory;
 
-	const versionFile = await getVersionManifest(options);
-
-	const mcPath =
+	options.mcPath =
 		options.overrides.minecraftJar ||
 		(options.version.custom
 			? join(
@@ -64,11 +57,22 @@ export async function init(options: ILauncherOptions) {
 					options.version.custom,
 					`${options.version.custom}.jar`
 				)
-			: join(directory, `${options.version.number}.jar`));
-	options.mcPath = mcPath;
+			: join(options.directory, `${options.version.number}.jar`));
+
+	return options;
+}
+
+export async function init(options: ILauncherOptions) {
+	initializeLauncherOptions(options);
+	createRootDirectory(options);
+	createGameDirectory(options);
+	extractPackage(options);
+
+	const java = await checkJava(options.javaPath || 'java');
+	const versionFile = await getVersionManifest(options);
 	const nativePath = await getNatives(options, versionFile);
 
-	if (!existsSync(mcPath)) {
+	if (!existsSync(options.mcPath || '')) {
 		client.emit('debug', 'Attempting to download Minecraft version jar');
 		await getJar(options, versionFile);
 	}
@@ -113,7 +117,7 @@ export async function init(options: ILauncherOptions) {
 	}
 
 	if (options.customArgs) jvm = jvm.concat(options.customArgs);
-	if (options.overrides.logj4ConfigurationFile) {
+	if (options.overrides?.logj4ConfigurationFile) {
 		jvm.push(
 			`-Dlog4j.configurationFile=${resolve(options.overrides.logj4ConfigurationFile)}`
 		);
@@ -128,7 +132,7 @@ export async function init(options: ILauncherOptions) {
 		minorVersion < 17 &&
 		!jvm.find((arg) => arg.includes('Dlog4j.configurationFile'))
 	) {
-		const configPath = resolve(options.overrides.cwd || options.root);
+		const configPath = resolve(options.overrides?.cwd || options.root);
 		if (minorVersion >= 12) {
 			await downloadAsync(
 				'https://launcher.mojang.com/v1/objects/02937d122c86ce73319ef9975b58896fc1b491d1/log4j2_112-116.xml',
@@ -151,7 +155,7 @@ export async function init(options: ILauncherOptions) {
 	}
 
 	const classes =
-		options.overrides.classes ||
+		options.overrides?.classes ||
 		cleanUp(await getClasses(modifyJson, options, versionFile));
 
 	const classPaths = ['-cp'];
@@ -159,9 +163,9 @@ export async function init(options: ILauncherOptions) {
 	// Handling launch arguments.
 	const file = modifyJson || versionFile;
 	// So mods like fabric work.
-	const jar = existsSync(mcPath)
-		? `${separator}${mcPath}`
-		: `${separator}${join(directory, `${options.version.number}.jar`)}`;
+	const jar = existsSync(options.mcPath || '')
+		? `${separator}${options.mcPath}`
+		: `${separator}${join(options.directory || '', `${options.version.number}.jar`)}`;
 	classPaths.push(
 		`${options.forge ? options.forge + separator : ''}${classes.join(separator)}${jar}`
 	);
@@ -232,7 +236,12 @@ async function getLaunchOptions(
 		);
 	if (options.customLaunchArgs) args = args.concat(options.customLaunchArgs);
 
-	options.authorization = await Promise.resolve(options.authorization);
+	// options.authorization = await Promise.resolve(options.authorization);
+	if (!options.authorization) {
+		throw new Error(
+			'No authorization provided. Please provide an authorization object.'
+		);
+	}
 	options.authorization.meta = options.authorization.meta
 		? options.authorization.meta
 		: { type: 'mojang' };

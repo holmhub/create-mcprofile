@@ -102,7 +102,7 @@ export async function getJar(
 export function parseVersion(versionId = '') {
 	const [majorVersion = 0, minorVersion = 0, patchVersion = 0] = versionId
 		.split('.')
-		.map(Number.parseInt);
+		.map((i) => Number.parseInt(i));
 	return { majorVersion, minorVersion, patchVersion };
 }
 
@@ -156,45 +156,21 @@ async function getVersionsManifest(
 	);
 }
 
-// /**
-//  * Test Case: bun run --hot src/client/handlers/version.ts
-//  */
+/**
+ * Test Case: bun run --hot src/client/handlers/version.ts
+ */
 // (async () => {
 // 	client.on('debug', console.log);
 // 	client.on('data', console.log);
-// 	client.on('progress', console.log);
-
-// 	const options: ILauncherOptions = {
+// 	const { handleProgress } = await import('../../../src/utils/progress.ts');
+// 	client.on('progress', handleProgress);
+// 	const { initializeLauncherOptions } = await import('../core/launch.ts');
+// 	const options = initializeLauncherOptions({
 // 		root: 'out',
 // 		version: {
-// 			number: '1.20.1',
-// 			type: '',
-// 			custom: undefined,
+// 			number: '1.7.5',
 // 		},
-// 		memory: {
-// 			max: '',
-// 			min: '',
-// 		},
-// 		directory: join('out', 'versions', '1.20.1'),
-// 		authorization: {
-// 			access_token: '',
-// 			client_token: '',
-// 			uuid: '',
-// 			name: '',
-// 			user_properties: '',
-// 		},
-// 		overrides: {
-// 			detached: true,
-// 			url: {
-// 				meta: 'https://launchermeta.mojang.com',
-// 				resource: 'https://resources.download.minecraft.net',
-// 				mavenForge: 'https://files.minecraftforge.net/maven/',
-// 				defaultRepoForge: 'https://libraries.minecraft.net/',
-// 				fallbackMaven: 'https://search.maven.org/remotecontent?filepath=',
-// 			},
-// 		},
-// 	};
-
+// 	});
 // 	const version = await getVersionManifest(options);
 // 	await getJar(options, version);
 // })();

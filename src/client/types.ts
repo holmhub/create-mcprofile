@@ -125,7 +125,7 @@ export interface ILauncherOptions {
 		/**
 		 * type of release, usually `release` or `snapshot`
 		 */
-		type: 'release' | 'snapshot' | string;
+		type?: 'release' | 'snapshot' | string;
 		/**
 		 * 	The name of the folder, jar file, and version json in the version folder.
 		 *
@@ -134,7 +134,7 @@ export interface ILauncherOptions {
 		 */
 		custom?: string;
 	};
-	memory: {
+	memory?: {
 		/**
 		 * Min amount of memory being used by Minecraft.
 		 */
@@ -221,7 +221,7 @@ export interface ILauncherOptions {
 	 */
 	overrides?: IOverrides;
 
-	authorization: IUser;
+	authorization?: IUser;
 	/**
 	 * Path of json cache.
 	 */

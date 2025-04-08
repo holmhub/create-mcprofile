@@ -103,3 +103,23 @@ async function processNative(
 		throw error;
 	}
 }
+
+/**
+ * Test Case: bun run --hot src/client/handlers/natives.ts
+ */
+// (async () => {
+// 	client.on('debug', console.log);
+// 	client.on('data', console.log);
+// 	const { handleProgress } = await import('../../../src/utils/progress.ts');
+// 	client.on('progress', handleProgress);
+// 	const { initializeLauncherOptions } = await import('../core/launch.ts');
+// 	const options = initializeLauncherOptions({
+// 		root: 'out',
+// 		version: {
+// 			number: '1.7.5',
+// 		},
+// 	});
+// 	const { getVersionManifest } = await import('./version.ts');
+// 	const manifest = await getVersionManifest(options);
+// 	getNatives(options, manifest);
+// })();
