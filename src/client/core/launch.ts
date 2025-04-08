@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { getAssets, isLegacy } from '../handlers/assets.ts';
 import { getClasses } from '../handlers/libraries.ts';
@@ -119,30 +119,19 @@ export async function init(options: ILauncherOptions) {
 		jvm.push('-Dlog4j2.formatMsgNoLookups=true');
 	}
 
-	if (
-		minorVersion < 17 &&
-		!jvm.find((arg) => arg.includes('Dlog4j.configurationFile'))
-	) {
-		const configPath = resolve(options.overrides?.cwd || options.root);
-		if (minorVersion >= 12) {
-			await downloadAsync(
+	// Handle log4j configuration for different versions
+	if (!jvm.find((arg) => arg.includes('Dlog4j.configurationFile'))) {
+		const log4jUrls = {
+			modern:
 				'https://launcher.mojang.com/v1/objects/02937d122c86ce73319ef9975b58896fc1b491d1/log4j2_112-116.xml',
-				configPath,
-				'log4j2_112-116.xml',
-				true,
-				'log4j'
-			);
-			jvm.push('-Dlog4j.configurationFile=log4j2_112-116.xml');
-		} else if (minorVersion >= 7) {
-			await downloadAsync(
+			legacy:
 				'https://launcher.mojang.com/v1/objects/dd2b723346a8dcd48e7f4d245f6bf09e98db9696/log4j2_17-111.xml',
-				configPath,
-				'log4j2_17-111.xml',
-				true,
-				'log4j'
-			);
-			jvm.push('-Dlog4j.configurationFile=log4j2_17-111.xml');
-		}
+		};
+		const url =
+			minorVersion >= 7 && minorVersion < 12
+				? log4jUrls.legacy
+				: log4jUrls.modern;
+		await configureLog4jForVersion(options, jvm, url);
 	}
 
 	const classes =
@@ -407,4 +396,46 @@ async function extractPackage(options: ILauncherOptions): Promise<void> {
 
 	client.emit('debug', `Extracting client package to ${options.root}`);
 	await downloadAndExtractPackage(options);
+}
+
+async function configureLog4jForVersion(
+	options: ILauncherOptions,
+	jvm: string[],
+	url: string
+): Promise<void> {
+	// Get game directory with fallback chain
+	const gameDir = resolve(
+		options.overrides?.gameDirectory || options.overrides?.cwd || options.root
+	);
+
+	// Define paths
+	const LOG4J_CONFIG = {
+		dir: join(gameDir, 'config'),
+		fileName: 'log4j2.xml',
+	} as const;
+
+	const configPath = join(LOG4J_CONFIG.dir, LOG4J_CONFIG.fileName);
+
+	// Ensure log4j directory exists
+	mkdirSync(LOG4J_CONFIG.dir, { recursive: true });
+
+	// Download and configure if doesn't exist
+	if (!existsSync(configPath)) {
+		await downloadAsync(
+			url,
+			LOG4J_CONFIG.dir,
+			LOG4J_CONFIG.fileName,
+			true,
+			'log4j'
+		);
+
+		// Read, modify, and write in a more controlled way
+		const configContent = readFileSync(configPath, 'utf8');
+		const logsPath = join(gameDir, 'logs').replace(/\\/g, '/'); // Normalize path separators
+		const updatedContent = configContent.replace(/logs\//g, `${logsPath}/`);
+		writeFileSync(configPath, updatedContent);
+	}
+
+	// Add to JVM arguments
+	jvm.push(`-Dlog4j.configurationFile=${configPath}`);
 }
