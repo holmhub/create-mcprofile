@@ -77,7 +77,7 @@ export async function init(options: ILauncherOptions) {
 		await getJar(options, versionFile);
 	}
 
-	const modifyJson = await getModifyJson(options);
+	const modifyJson = getModifyJson(options);
 
 	const args: string[] = [];
 	const { minorVersion } = parseVersion(versionFile.id);
@@ -156,7 +156,7 @@ export async function init(options: ILauncherOptions) {
 
 	const classes =
 		options.overrides?.classes ||
-		cleanUp(await getClasses(modifyJson, options, versionFile));
+		cleanUp(await getClasses(options, versionFile, modifyJson));
 
 	const classPaths = ['-cp'];
 	const separator = getOS() === 'windows' ? ';' : ':';
@@ -176,9 +176,9 @@ export async function init(options: ILauncherOptions) {
 
 	// Forge -> Custom -> Vanilla
 	const launchOptions = await getLaunchOptions(
-		modifyJson,
 		options,
-		versionFile
+		versionFile,
+		modifyJson
 	);
 
 	const stringArgs = launchOptions.map((arg) =>
@@ -211,9 +211,9 @@ function startMinecraft(launchArguments: string[], options: ILauncherOptions) {
 }
 
 async function getLaunchOptions(
-	modification: IVersionManifest,
 	options: ILauncherOptions,
-	version: IVersionManifest
+	version: IVersionManifest,
+	modification?: IVersionManifest
 ) {
 	const type = Object.assign({}, version, modification);
 

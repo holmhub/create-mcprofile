@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { downloadToDirectory } from '../core/download.ts';
 import { client } from '../index.ts';
@@ -6,9 +6,9 @@ import type { ILauncherOptions, IVersionManifest } from '../types.ts';
 import { parseRule } from '../utils/system.ts';
 
 export async function getClasses(
-	classJson: IVersionManifest,
 	options: ILauncherOptions,
-	version: IVersionManifest
+	version: IVersionManifest,
+	classJson?: IVersionManifest
 ) {
 	let libs: string[] = [];
 
@@ -52,8 +52,15 @@ export async function getClasses(
 	return libs;
 }
 
-export function getModifyJson(options: ILauncherOptions) {
-	if (!options.version.custom) return null;
+export function getModifyJson(
+	options: ILauncherOptions
+): IVersionManifest | undefined {
+	if (!options.version.custom) {
+		client.emit('debug', 'No custom version specified');
+		return;
+	}
+
+	console.log(options.version.custom);
 
 	const customVersionPath = join(
 		options.root,
@@ -62,6 +69,16 @@ export function getModifyJson(options: ILauncherOptions) {
 		`${options.version.custom}.json`
 	);
 
-	client.emit('debug', 'Loading custom version file');
-	return JSON.parse(readFileSync(customVersionPath, 'utf-8'));
+	if (!existsSync(customVersionPath)) {
+		client.emit('debug', `Custom version file not found: ${customVersionPath}`);
+		return;
+	}
+
+	try {
+		client.emit('debug', 'Loading custom version file');
+		return JSON.parse(readFileSync(customVersionPath, 'utf-8'));
+	} catch (error) {
+		client.emit('debug', `Failed to parse custom version file: ${error}`);
+		return;
+	}
 }
