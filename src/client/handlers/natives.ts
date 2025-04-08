@@ -104,9 +104,6 @@ async function processNative(
 	}
 }
 
-/**
- * Test Case: bun run --hot src/client/handlers/natives.ts
- */
 // (async () => {
 // 	client.on('debug', console.log);
 // 	client.on('data', console.log);
