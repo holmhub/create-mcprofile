@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { getAssets, isLegacy } from '../handlers/assets.ts';
 import { getClasses } from '../handlers/libraries.ts';
@@ -12,15 +12,10 @@ import {
 } from '../handlers/version.ts';
 import { client } from '../index.ts';
 import type { ILauncherOptions, IVersionManifest } from '../types.ts';
-import {
-	cleanUp,
-	createGameDirectory,
-	createRootDirectory,
-	extractPackage,
-} from '../utils/files.ts';
 import { getMemory } from '../utils/memory.ts';
+import { getUniqueNonNullValues } from '../utils/other.ts';
 import { getOS } from '../utils/system.ts';
-import { downloadAsync } from './download.ts';
+import { downloadAndExtractPackage, downloadAsync } from './download.ts';
 import { checkJava, getJVM } from './java.ts';
 
 export function initializeLauncherOptions(
@@ -41,13 +36,14 @@ export function initializeLauncherOptions(
 		},
 	};
 
-	options.directory =
+	options.directory = resolve(
 		options.overrides.directory ||
-		join(
-			options.root,
-			'versions',
-			options.version.custom || options.version.number
-		);
+			join(
+				options.root,
+				'versions',
+				options.version.custom || options.version.number
+			)
+	);
 
 	options.mcPath =
 		options.overrides.minecraftJar ||
@@ -65,8 +61,10 @@ export function initializeLauncherOptions(
 
 export async function init(options: ILauncherOptions) {
 	initializeLauncherOptions(options);
-	createRootDirectory(options);
-	createGameDirectory(options);
+	mkdirSync(options.root, { recursive: true });
+	if (options.directory) {
+		mkdirSync(options.directory, { recursive: true });
+	}
 	extractPackage(options);
 
 	const java = await checkJava(options.javaPath || 'java');
@@ -156,7 +154,7 @@ export async function init(options: ILauncherOptions) {
 
 	const classes =
 		options.overrides?.classes ||
-		cleanUp(await getClasses(options, versionFile, modifyJson));
+		getUniqueNonNullValues(await getClasses(options, versionFile, modifyJson));
 
 	const classPaths = ['-cp'];
 	const separator = getOS() === 'windows' ? ';' : ':';
@@ -399,4 +397,11 @@ function formatQuickPlay(options: ILauncherOptions): string[] | undefined {
 	}
 
 	return returnArgs;
+}
+
+async function extractPackage(options: ILauncherOptions): Promise<void> {
+	if (!options.clientPackage) return;
+
+	client.emit('debug', `Extracting client package to ${options.root}`);
+	await downloadAndExtractPackage(options);
 }
