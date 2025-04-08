@@ -9,44 +9,48 @@ import type {
 	VersionManifestResponse,
 } from '../types.ts';
 import { fetchJsonWithRetry } from '../utils/fetch.ts';
+import { getErrorMessage } from '../utils/other.ts';
+
+const ERRORS = {
+	NO_DIRECTORY: 'Directory is required in launcher options',
+	NO_DOWNLOAD_URL: 'Invalid version manifest: missing client download URL',
+	VERSION_NOT_FOUND: (version: string) =>
+		`Version ${version} not found in manifest`,
+	MANIFEST_FETCH_FAILED: (error: unknown) =>
+		`Failed to get version manifest: ${getErrorMessage(error)}`,
+	GET_JAR_FAILED: (error: unknown) =>
+		`Failed to process version files: ${getErrorMessage(error)}`,
+};
 
 /**
  * Retrieves the version manifest for a specific Minecraft version
- * @param options Launcher configuration options
- * @throws {Error} If directory is not specified or manifest fetch fails
- * @returns {Promise<IVersionManifest>} Version manifest data
  */
 export function getVersionManifest(
 	options: ILauncherOptions
 ): Promise<IVersionManifest> {
-	if (!options.directory) {
-		throw new Error('No version directory specified');
-	}
+	if (!options.directory) throw new Error(ERRORS.NO_DIRECTORY);
 
-	const localVersionPath =
+	const versionPath =
 		options.overrides?.versionJson ??
 		join(options.directory, `${options.version.number}.json`);
 
 	try {
 		// Try to load from local version file first
-		if (existsSync(localVersionPath)) {
-			const localVersion = JSON.parse(readFileSync(localVersionPath, 'utf-8'));
-			client.emit('debug', `Using local version from ${localVersionPath}`);
+		if (existsSync(versionPath)) {
+			const localVersion = JSON.parse(readFileSync(versionPath, 'utf-8'));
+			client.emit('debug', `Using local version from ${versionPath}`);
 			return localVersion;
 		}
 
 		// Fetch from manifest if local file doesn't exist
 		return getVersionManifestData(options);
 	} catch (error) {
-		throw new Error(`Failed to get version manifest: ${error}`);
+		throw new Error(ERRORS.MANIFEST_FETCH_FAILED(error));
 	}
 }
 
 /**
  * Downloads the Minecraft jar file and saves version manifest
- * @param options Launcher configuration options
- * @param version Version manifest containing download URLs
- * @returns {Promise<boolean>} True if download successful, false otherwise
  */
 export async function getJar(
 	options: ILauncherOptions,
@@ -54,18 +58,12 @@ export async function getJar(
 ): Promise<boolean> {
 	try {
 		// Validate required inputs
-		if (!options?.directory) {
-			throw new Error('Directory is required in launcher options');
-		}
-		if (!version?.downloads?.client?.url) {
-			throw new Error('Invalid version manifest: missing client download URL');
-		}
+		if (!options?.directory) throw new Error(ERRORS.NO_DIRECTORY);
+		if (!version?.downloads?.client?.url)
+			throw new Error(ERRORS.NO_DOWNLOAD_URL);
 
 		// Ensure directory exists
-		if (!existsSync(options.directory)) {
-			mkdirSync(options.directory, { recursive: true });
-			client.emit('debug', `Created directory: ${options.directory}`);
-		}
+		mkdirSync(options.directory, { recursive: true });
 
 		// Prepare file paths
 		const jarFileName = options.version.custom ?? options.version.number;
@@ -93,21 +91,16 @@ export async function getJar(
 
 		return true;
 	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : String(error);
-		client.emit('debug', `Failed to process version files: ${errorMessage}`);
+		client.emit('debug', ERRORS.GET_JAR_FAILED(error));
 		return false;
 	}
 }
 
 /**
  * Parses a version string into major, minor, and patch numbers
- * @param versionId Version string in format "x.y.z" (e.g., "1.20.1")
- * @returns {{ majorVersion: number, minorVersion: number, patchVersion: number }}
  */
-export function parseVersion(versionId: string | undefined) {
-	const [majorVersion = 0, minorVersion = 0, patchVersion = 0] = (
-		versionId || ''
-	)
+export function parseVersion(versionId = '') {
+	const [majorVersion = 0, minorVersion = 0, patchVersion = 0] = versionId
 		.split('.')
 		.map(Number.parseInt);
 	return { majorVersion, minorVersion, patchVersion };
@@ -123,10 +116,7 @@ async function getCachedOrFetch<T>(
 	fetchFn: () => Promise<T>
 ): Promise<T> {
 	const cacheDirectory = resolveCachePath(options);
-	if (!existsSync(cacheDirectory)) {
-		mkdirSync(cacheDirectory, { recursive: true });
-		client.emit('debug', 'Cache directory created.');
-	}
+	mkdirSync(cacheDirectory, { recursive: true });
 
 	const cachePath = join(cacheDirectory, fileName);
 
@@ -147,15 +137,12 @@ async function getCachedOrFetch<T>(
 async function getVersionManifestData(
 	options: ILauncherOptions
 ): Promise<IVersionManifest> {
-	const { number: requestedVersion } = options.version;
-	return getCachedOrFetch(options, `${requestedVersion}.json`, async () => {
-		const versionsManifest = await getVersionsManifest(options);
-		const targetVersion = versionsManifest.versions.find(
-			({ id }) => id === requestedVersion
-		);
-		if (!targetVersion)
-			throw new Error(`Version ${requestedVersion} not found in manifest`);
-		return fetchJsonWithRetry<IVersionManifest>(targetVersion.url);
+	const { number: version } = options.version;
+	return getCachedOrFetch(options, `${version}.json`, async () => {
+		const manifest = await getVersionsManifest(options);
+		const target = manifest.versions.find(({ id }) => id === version);
+		if (!target) throw new Error(ERRORS.VERSION_NOT_FOUND(version));
+		return fetchJsonWithRetry<IVersionManifest>(target.url);
 	});
 }
 
@@ -178,7 +165,7 @@ async function getVersionsManifest(
 // 	client.on('progress', console.log);
 
 // 	const options: ILauncherOptions = {
-// 		root: resolve('out'),
+// 		root: 'out',
 // 		version: {
 // 			number: '1.20.1',
 // 			type: '',
