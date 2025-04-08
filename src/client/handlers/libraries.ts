@@ -1,8 +1,8 @@
-import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { downloadToDirectory } from '../core/download.ts';
 import { client } from '../index.ts';
-import type { ILauncherOptions, IVersionManifest } from '../types.ts';
+import type { ILauncherOptions, ILibrary, IVersionManifest } from '../types.ts';
+import { getErrorMessage } from '../utils/other.ts';
 import { parseRule } from '../utils/system.ts';
 
 export async function getClasses(
@@ -10,75 +10,110 @@ export async function getClasses(
 	version: IVersionManifest,
 	classJson?: IVersionManifest
 ) {
-	let libs: string[] = [];
-
 	const libraryDirectory = resolve(
 		options.overrides?.libraryRoot || join(options.root, 'libraries')
 	);
 
-	if (classJson) {
-		if (classJson.mavenFiles) {
-			await downloadToDirectory(
-				libraryDirectory,
-				classJson.mavenFiles,
-				'classes-maven-custom'
-			);
-		}
-		libs = await downloadToDirectory(
-			libraryDirectory,
-			classJson.libraries,
-			'classes-custom'
+	try {
+		const customLibs = await downloadCustomLibraries(
+			classJson,
+			libraryDirectory
 		);
+		const vanillaLibs = await downloadVanillaLibraries(
+			classJson,
+			libraryDirectory,
+			version
+		);
+
+		client.emit('debug', 'Collected class paths');
+		return [...customLibs, ...vanillaLibs];
+	} catch (error) {
+		client.emit('debug', `Failed to download libraries: ${error}`);
+		return [];
 	}
-
-	const parsed = version.libraries.filter((lib) => {
-		if (
-			lib.downloads?.artifact &&
-			!parseRule(lib) &&
-			!classJson?.libraries.some(
-				(l) => l.name.split(':')[1] === lib.name.split(':')[1]
-			)
-		) {
-			return true;
-		}
-		return false;
-	});
-
-	libs = libs.concat(
-		await downloadToDirectory(libraryDirectory, parsed, 'classes')
-	);
-
-	client.emit('debug', 'Collected class paths');
-	return libs;
 }
 
-export function getModifyJson(
-	options: ILauncherOptions
-): IVersionManifest | undefined {
-	if (!options.version.custom) {
-		client.emit('debug', 'No custom version specified');
-		return;
+/**
+ * Downloads a set of libraries to the specified directory with optional pre-download operations
+ * @returns Array of downloaded library paths
+ */
+async function downloadLibraries(
+	directory: string,
+	libraries: ILibrary[],
+	eventName: string,
+	beforeDownload?: () => Promise<void>
+): Promise<string[]> {
+	try {
+		if (beforeDownload) {
+			await beforeDownload();
+		}
+		return await downloadToDirectory(directory, libraries, eventName);
+	} catch (error) {
+		client.emit(
+			'debug',
+			`Failed to download libraries: ${getErrorMessage(error)}`
+		);
+		return [];
 	}
+}
 
-	console.log(options.version.custom);
+/**
+ * Downloads custom libraries (like Forge/Fabric) and their Maven dependencies
+ * @returns Array of downloaded custom library paths
+ */
+function downloadCustomLibraries(
+	classJson: IVersionManifest | undefined,
+	libraryDirectory: string
+): Promise<string[]> {
+	if (!classJson) return Promise.resolve([]);
 
-	const customVersionPath = join(
-		options.root,
-		'versions',
-		options.version.custom,
-		`${options.version.custom}.json`
+	return downloadLibraries(
+		libraryDirectory,
+		classJson.libraries,
+		'classes-custom',
+		async () => {
+			if (classJson.mavenFiles) {
+				await downloadLibraries(
+					libraryDirectory,
+					classJson.mavenFiles,
+					'classes-maven-custom'
+				);
+			}
+		}
+	);
+}
+
+/**
+ * Downloads vanilla Minecraft libraries that are compatible with the system
+ * and don't conflict with custom libraries
+ * @returns Array of downloaded vanilla library paths
+ */
+function downloadVanillaLibraries(
+	classJson: IVersionManifest | undefined,
+	libraryDirectory: string,
+	version: IVersionManifest
+): Promise<string[]> {
+	const compatibleLibs = version.libraries.filter(
+		(lib) => isLibraryCompatible(lib) && isLibraryUnique(lib, classJson)
 	);
 
-	if (!existsSync(customVersionPath)) {
-		client.emit('debug', `Custom version file not found: ${customVersionPath}`);
-		return;
-	}
+	return downloadLibraries(libraryDirectory, compatibleLibs, 'classes-vanilla');
+}
 
-	try {
-		client.emit('debug', 'Loading custom version file');
-		return JSON.parse(readFileSync(customVersionPath, 'utf-8'));
-	} catch (error) {
-		client.emit('debug', `Failed to parse custom version file: ${error}`);
-		return;
-	}
+/**
+ * Checks if a library is compatible with the current system
+ * @returns true if library has artifacts and passes system rules
+ */
+function isLibraryCompatible(lib: ILibrary): boolean {
+	return lib.downloads?.artifact !== undefined && !parseRule(lib);
+}
+
+/**
+ * Checks if a library doesn't conflict with custom version libraries
+ * @returns true if library name is unique across all libraries
+ */
+function isLibraryUnique(lib: ILibrary, classJson?: IVersionManifest): boolean {
+	if (!classJson) return true;
+	const libName = lib.name.split(':')[1];
+	return !classJson.libraries.some((l) => l.name.split(':')[1] === libName);
 }

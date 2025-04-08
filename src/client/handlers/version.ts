@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { downloadAsync } from '../core/download.ts';
 import { client } from '../index.ts';
@@ -20,6 +20,8 @@ const ERRORS = {
 		`Failed to get version manifest: ${getErrorMessage(error)}`,
 	GET_JAR_FAILED: (error: unknown) =>
 		`Failed to process version files: ${getErrorMessage(error)}`,
+	CUSTOM_VERSION_FAILED: (error: unknown) =>
+		`Failed to load custom version file: ${getErrorMessage(error)}`,
 };
 
 /**
@@ -93,6 +95,45 @@ export async function getJar(
 	} catch (error) {
 		client.emit('debug', ERRORS.GET_JAR_FAILED(error));
 		return false;
+	}
+}
+
+/**
+ * Loads and parses a custom version manifest file
+ * @throws Error if file reading or parsing fails
+ */
+export async function getCustomVersionManifest(
+	options: ILauncherOptions
+): Promise<IVersionManifest | undefined> {
+	if (!options.version.custom) {
+		client.emit('debug', 'No custom version specified');
+		return;
+	}
+
+	const customVersionPath = join(
+		options.root,
+		'versions',
+		options.version.custom,
+		`${options.version.custom}.json`
+	);
+
+	try {
+		if (!existsSync(customVersionPath)) {
+			client.emit(
+				'debug',
+				`Custom version file not found: ${customVersionPath}`
+			);
+			return;
+		}
+
+		const fileContent = await readFile(customVersionPath, 'utf-8');
+		const manifest = JSON.parse(fileContent) as IVersionManifest;
+
+		client.emit('debug', 'Successfully loaded custom version file');
+		return manifest;
+	} catch (error) {
+		client.emit('debug', ERRORS.CUSTOM_VERSION_FAILED(error));
+		return;
 	}
 }
 

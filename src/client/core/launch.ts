@@ -2,12 +2,13 @@ import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { getAssets, isLegacy } from '../handlers/assets.ts';
-import { getClasses, getModifyJson } from '../handlers/libraries.ts';
+import { getClasses } from '../handlers/libraries.ts';
 import { getNatives } from '../handlers/natives.ts';
 import {
+	getCustomVersionManifest,
 	getJar,
-	parseVersion,
 	getVersionManifest,
+	parseVersion,
 } from '../handlers/version.ts';
 import { client } from '../index.ts';
 import type { ILauncherOptions, IVersionManifest } from '../types.ts';
@@ -70,14 +71,13 @@ export async function init(options: ILauncherOptions) {
 
 	const java = await checkJava(options.javaPath || 'java');
 	const versionFile = await getVersionManifest(options);
+	const modifyJson = await getCustomVersionManifest(options);
 	const nativePath = await getNatives(options, versionFile);
 
 	if (!existsSync(options.mcPath || '')) {
 		client.emit('debug', 'Attempting to download Minecraft version jar');
 		await getJar(options, versionFile);
 	}
-
-	const modifyJson = getModifyJson(options);
 
 	const args: string[] = [];
 	const { minorVersion } = parseVersion(versionFile.id);
