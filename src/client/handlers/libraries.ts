@@ -9,7 +9,7 @@ export async function getClasses(
 	options: ILauncherOptions,
 	version: IVersionManifest,
 	classJson?: IVersionManifest
-) {
+): Promise<string[]> {
 	const libraryDirectory = resolve(
 		options.overrides?.libraryRoot || join(options.root, 'libraries')
 	);
@@ -117,3 +117,19 @@ function isLibraryUnique(lib: ILibrary, classJson?: IVersionManifest): boolean {
 	const libName = lib.name.split(':')[1];
 	return !classJson.libraries.some((l) => l.name.split(':')[1] === libName);
 }
+
+// (async () => {
+// 	client.on('debug', console.log);
+// 	client.on('data', console.log);
+// 	const { handleProgress } = await import('@/utils/progress.ts');
+// 	client.on('progress', handleProgress);
+// 	const { initializeLauncherOptions } = await import('@/client/core/launch.ts');
+// 	const options = initializeLauncherOptions({
+// 		root: 'out',
+// 		version: { number: '1.7.5' },
+// 	});
+// 	const { getVersionManifest } = await import('@/client/handlers/version.ts');
+// 	const version = await getVersionManifest(options);
+// 	const classes = await getClasses(options, version, undefined);
+// 	console.log(classes);
+// })();
