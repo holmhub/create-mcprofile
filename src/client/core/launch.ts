@@ -108,19 +108,18 @@ export async function init(options: ILauncherOptions) {
 	}
 
 	if (options.customArgs) jvm = jvm.concat(options.customArgs);
-	if (options.overrides?.logj4ConfigurationFile) {
-		jvm.push(
-			`-Dlog4j.configurationFile=${resolve(options.overrides.logj4ConfigurationFile)}`
-		);
-	}
 
 	// https://help.minecraft.net/hc/en-us/articles/4416199399693-Security-Vulnerability-in-Minecraft-Java-Edition
 	if (minorVersion === 18 || minorVersion === 17) {
 		jvm.push('-Dlog4j2.formatMsgNoLookups=true');
 	}
 
-	// Handle log4j configuration for different versions
-	if (!jvm.find((arg) => arg.includes('Dlog4j.configurationFile'))) {
+	// Handle log4j configuration
+	if (options.overrides?.logj4ConfigurationFile) {
+		jvm.push(
+			`-Dlog4j.configurationFile=${resolve(options.overrides.logj4ConfigurationFile)}`
+		);
+	} else {
 		const log4jUrls = {
 			modern:
 				'https://launcher.mojang.com/v1/objects/02937d122c86ce73319ef9975b58896fc1b491d1/log4j2_112-116.xml',
