@@ -3,6 +3,7 @@ import { join, resolve } from 'node:path';
 import { customCheckSum, downloadAsync } from '../core/download.ts';
 import { client } from '../index.ts';
 import type { ILauncherOptions, IVersionManifest } from '../types.ts';
+import { getErrorMessage } from '../utils/other.ts';
 
 interface AssetObject {
 	hash: string;
@@ -152,7 +153,10 @@ async function copyLegacyAssets(
 					total: assets.length,
 				});
 			} catch (error) {
-				throw new Error(ERRORS.LEGACY_COPY(asset, error));
+				client.emit(
+					'debug',
+					`Failed to copy asset ${asset}: ${getErrorMessage(error)}`
+				);
 			}
 		})
 	);
@@ -166,9 +170,12 @@ function copyLegacyAsset(
 ): void {
 	const subhash = hash.substring(0, 2);
 	const sourcePath = join(assetDirectory, 'objects', subhash, hash);
-	const targetPath = join(legacyDirectory, asset);
+	const targetPath = join(legacyDirectory, ...asset.split('/'));
 
-	const targetDir = targetPath.split('/').slice(0, -1).join('/');
+	const targetDir = join(
+		legacyDirectory,
+		asset.split('/').slice(0, -1).join('\\')
+	);
 	if (!existsSync(targetDir)) {
 		mkdirSync(targetDir, { recursive: true });
 	}

@@ -16,7 +16,7 @@ import { getMemory } from '../utils/memory.ts';
 import { getUniqueNonNullValues } from '../utils/other.ts';
 import { getOS } from '../utils/system.ts';
 import { downloadAndExtractPackage, downloadAsync } from './download.ts';
-import { checkJava, getJVM } from './java.ts';
+import { checkJava, getJVM, setupJava8 } from './java.ts';
 
 export function initializeLauncherOptions(
 	options: ILauncherOptions
@@ -67,8 +67,18 @@ export async function init(options: ILauncherOptions) {
 	}
 	extractPackage(options);
 
-	const java = await checkJava(options.javaPath || 'java');
 	const versionFile = await getVersionManifest(options);
+	const { minorVersion } = parseVersion(versionFile.id);
+
+	// Handle Java path for legacy versions
+	let javaPath = options.javaPath || 'java';
+	if (minorVersion < 7) {
+		client.emit('debug', 'Legacy version detected, setting up Java 8...');
+		javaPath = await setupJava8(options.root);
+		options.javaPath = javaPath;
+	}
+
+	await checkJava(javaPath);
 	const modifyJson = await getCustomVersionManifest(options);
 	const nativePath = await getNatives(options, versionFile);
 
@@ -78,17 +88,6 @@ export async function init(options: ILauncherOptions) {
 	}
 
 	const args: string[] = [];
-	const { minorVersion } = parseVersion(versionFile.id);
-
-	// Version compatibility check for Java
-	if (minorVersion < 6 && parseVersion(java.version).majorVersion > 8) {
-		client.emit(
-			'debug',
-			'Minecraft versions before 1.6 require Java 8. Please install and use Java 8 for this version.'
-		);
-		client.emit('close', 1);
-		return;
-	}
 
 	let jvm = [
 		'-XX:-UseAdaptiveSizePolicy',
@@ -99,12 +98,6 @@ export async function init(options: ILauncherOptions) {
 		`-Xmx${getMemory(options)[0]}`,
 		`-Xms${getMemory(options)[1]}`,
 	];
-
-	// Legacy versions (pre-1.6) use a different launch system
-	if (minorVersion < 6) {
-		jvm = jvm.filter((arg) => !arg.includes('fml.')); // Remove Forge args for very old versions
-		jvm.push('net.minecraft.client.Minecraft'); // Use direct main class
-	}
 
 	if (getOS() === 'osx') {
 		if (minorVersion > 12) {
@@ -182,7 +175,17 @@ export async function init(options: ILauncherOptions) {
 	const stringArgs = launchOptions.map((arg) =>
 		typeof arg === 'string' ? arg : String(arg)
 	);
-	const launchArguments = args.concat(jvm, classPaths, stringArgs);
+
+	// Handle launch arguments differently for legacy versions
+	const launchArguments =
+		minorVersion < 6
+			? args.concat(
+					jvm,
+					classPaths,
+					['net.minecraft.client.Minecraft'],
+					stringArgs
+				)
+			: args.concat(jvm, classPaths, stringArgs);
 
 	client.emit('arguments', launchArguments);
 

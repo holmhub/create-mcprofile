@@ -1,10 +1,10 @@
+import AdmZip from 'adm-zip';
 import { createHash } from 'node:crypto';
 import { createWriteStream, existsSync, mkdirSync, unlinkSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join, sep } from 'node:path';
 import { client } from '../index.ts';
 import type { ILauncherOptions, ILibrary } from '../types.ts';
-import { unzipFile } from '../utils/compressor.ts';
 import { parseRule } from '../utils/system.ts';
 
 let counter = 0;
@@ -89,7 +89,8 @@ export async function downloadAndExtractPackage(options: ILauncherOptions) {
 		options.clientPackage = join(root, 'clientPackage.zip');
 	}
 
-	unzipFile(clientPackage, root);
+	const zip = new AdmZip(clientPackage);
+	zip.extractAllTo(root, true);
 	if (removePackage) unlinkSync(clientPackage);
 
 	return client.emit('package-extract', true);

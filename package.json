@@ -16,9 +16,13 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
+    "@types/adm-zip": "^0.5.7",
     "@types/bun": "^1.2.8"
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16"
   }
 }
