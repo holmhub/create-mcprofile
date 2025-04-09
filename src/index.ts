@@ -44,7 +44,7 @@ function getFolders(folder: string): string[] {
 	}
 }
 
-async function main(): Promise<void> {
+async function _mainOld(): Promise<void> {
 	// Get username with default
 	const defaultUsername = process.env.USERNAME || 'Player';
 	const usernameInput = await getFromInput(
@@ -166,5 +166,3 @@ async function main(): Promise<void> {
 		allowedSet.has(event.type) && handleDownloadStatus(event);
 	});
 }
-
-main().finally(() => rl.close());

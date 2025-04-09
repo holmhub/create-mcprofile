@@ -187,12 +187,12 @@ async function getVersionManifestData(
 	});
 }
 
-async function getVersionsManifest(
+export async function getVersionsManifest(
 	options: ILauncherOptions
 ): Promise<VersionManifestResponse> {
 	return getCachedOrFetch(options, 'version_manifest.json', () =>
 		fetchJsonWithRetry<VersionManifestResponse>(
-			`${options.overrides?.url?.meta}/mc/game/version_manifest.json`
+			`${options.overrides?.url?.meta || 'https://launchermeta.mojang.com'}/mc/game/version_manifest.json`
 		)
 	);
 }

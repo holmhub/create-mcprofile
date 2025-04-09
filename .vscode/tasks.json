@@ -6,7 +6,7 @@
         {
             "label": "Run Current File with Bun",
             "type": "shell",
-            "command": "bun run --hot ${relativeFile}",
+            "command": "bun run --watch ${relativeFile}",
             "group": {
                 "kind": "build",
                 "isDefault": true
