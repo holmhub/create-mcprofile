@@ -3,7 +3,7 @@ import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { client } from '../index.ts';
-import { extractAllTo } from '../utils/adm-zip.ts';
+import { extractSync } from '../utils/adm-zip.ts';
 import { getErrorMessage } from '../utils/other.ts';
 import { getOS } from '../utils/system.ts';
 import { downloadAsync } from './download.ts';
@@ -120,7 +120,7 @@ async function setupJava(
 
 		// Extract JDK
 		client.emit('debug', `Extracting Java ${config.version}...`);
-		extractAllTo(downloadPath, javaDir, true, (task, total) => {
+		extractSync(downloadPath, javaDir, true, (task, total) => {
 			client.emit('progress', {
 				type: 'extract',
 				task: task,

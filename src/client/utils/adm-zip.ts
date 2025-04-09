@@ -2,7 +2,15 @@ import AdmZip from 'adm-zip';
 import { mkdirSync, utimesSync, writeFileSync } from 'node:fs';
 import { normalize, resolve } from 'node:path';
 
-export function extractAllTo(
+/**
+ * Extracts all files from a ZIP archive to a target directory
+ * @param zipPath - Path to the ZIP file
+ * @param targetPath - Directory where files will be extracted
+ * @param overwrite - Whether to overwrite existing files (default: false)
+ * @param progressCallback - Optional callback for extraction progress
+ * @throws {Error} When file extraction fails
+ */
+export function extractSync(
 	zipPath: string,
 	targetPath: string,
 	overwrite?: boolean,
