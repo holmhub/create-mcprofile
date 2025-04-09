@@ -6,13 +6,18 @@ import { promisify } from 'node:util';
 import { client } from '../index.ts';
 import { getOS } from '../utils/system.ts';
 import { downloadAsync } from './download.ts';
+import { getErrorMessage } from '../utils/other.ts';
 
 const execAsync = promisify(exec);
 
-interface JavaInfo {
-	run: boolean;
-	version: string | undefined;
-	arch: string | undefined;
+interface JavaSetupConfig {
+	version: '8' | '21';
+	baseUrl: string;
+	urlPaths: {
+		windows: string;
+		osx: string;
+		linux: string;
+	};
 }
 
 const JVM_OPTIONS = {
@@ -23,27 +28,19 @@ const JVM_OPTIONS = {
 } as const;
 
 /**
- * Checks Java installation and returns version information
- * @throws Will exit process if Java check fails
+ * Checks Java installation and returns version number
+ * @returns Version number (e.g., 8, 11, 17) or undefined if not found
  */
-export async function checkJava(java: string): Promise<JavaInfo> {
+export async function checkJava(java: string): Promise<number | undefined> {
 	try {
 		const { stderr = '' } = await execAsync(`"${java}" -version`);
-
-		const versionMatch = stderr.match(/"(.*?)"/);
-		const version = versionMatch?.[1];
-		const arch = stderr.includes('64-Bit') ? '64-bit' : '32-Bit';
-
-		if (!version) {
-			throw new Error('Could not determine Java version');
-		}
-
-		client.emit('debug', `Using Java version ${version} ${arch}`);
-		return { run: true, version, arch };
+		const version = Number(stderr.match(/"(\d+)/)?.[1]);
+		if (Number.isNaN(version)) throw new Error('Failed to parse Java version');
+		client.emit('debug', `Found Java version: ${version}`);
+		return version;
 	} catch (error) {
-		const errorMessage = error instanceof Error ? error.message : String(error);
-		client.emit('debug', `Failed to start Java: ${errorMessage}`);
-		process.exit(1);
+		client.emit('debug', `Failed to check Java: ${getErrorMessage(error)}`);
+		return;
 	}
 }
 
@@ -59,44 +56,71 @@ export function getJVM(): string {
  * Downloads and extracts Java 8 for legacy Minecraft versions
  * @returns Path to the java executable
  */
-export async function setupJava8(rootDir: string): Promise<string> {
-	const JAVA8_BASE_URL =
-		'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u392-b08';
-	const JAVA8_URLS = {
-		windows: `${JAVA8_BASE_URL}/OpenJDK8U-jdk_x64_windows_hotspot_8u392b08.zip`,
-		osx: `${JAVA8_BASE_URL}/OpenJDK8U-jdk_x64_mac_hotspot_8u392b08.tar.gz`,
-		linux: `${JAVA8_BASE_URL}/OpenJDK8U-jdk_x64_linux_hotspot_8u392b08.tar.gz`,
-	} as const;
+export function setupJava8(rootDir: string): Promise<string> {
+	return setupJava(rootDir, {
+		version: '8',
+		baseUrl:
+			'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u392-b08',
+		urlPaths: {
+			windows: 'OpenJDK8U-jdk_x64_windows_hotspot_8u392b08.zip',
+			osx: 'OpenJDK8U-jdk_x64_mac_hotspot_8u392b08.tar.gz',
+			linux: 'OpenJDK8U-jdk_x64_linux_hotspot_8u392b08.tar.gz',
+		},
+	});
+}
 
+/**
+ * Downloads and extracts Java 21 for modern Minecraft versions
+ * @returns Path to the java executable
+ */
+export function setupJava21(rootDir: string): Promise<string> {
+	return setupJava(rootDir, {
+		version: '21',
+		baseUrl:
+			'https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.1%2B12',
+		urlPaths: {
+			windows: 'OpenJDK21U-jdk_x64_windows_hotspot_21.0.1_12.zip',
+			osx: 'OpenJDK21U-jdk_x64_mac_hotspot_21.0.1_12.tar.gz',
+			linux: 'OpenJDK21U-jdk_x64_linux_hotspot_21.0.1_12.tar.gz',
+		},
+	});
+}
+
+async function setupJava(
+	rootDir: string,
+	config: JavaSetupConfig
+): Promise<string> {
 	const os = getOS();
-	const javaDir = join(rootDir, 'runtime', 'java-8');
+	const javaDir = join(rootDir, 'runtime', `java-${config.version}`);
 	const javaExecutable =
 		os === 'windows'
 			? join(javaDir, 'bin', 'java.exe')
 			: join(javaDir, 'bin', 'java');
 
-	// Return existing installation if found
 	if (existsSync(javaExecutable)) {
-		client.emit('debug', 'Using existing Java 8 installation');
+		client.emit('debug', `Using existing Java ${config.version} installation`);
 		return javaExecutable;
 	}
 
 	try {
-		// Download JDK if needed
-		const url = JAVA8_URLS[os];
-		const fileName = `java8.${os === 'windows' ? 'zip' : 'tar.gz'}`;
+		const url = `${config.baseUrl}/${config.urlPaths[os]}`;
+		const fileName = `java${config.version}.${os === 'windows' ? 'zip' : 'tar.gz'}`;
 		const downloadPath = join(javaDir, fileName);
 
 		if (!existsSync(downloadPath)) {
-			client.emit('debug', 'Downloading Java 8...');
-			await downloadAsync(url, javaDir, fileName, true, 'java8');
+			client.emit('debug', `Downloading Java ${config.version}...`);
+			await downloadAsync(
+				url,
+				javaDir,
+				fileName,
+				true,
+				`java${config.version}`
+			);
 		}
 
 		// Extract JDK
-		client.emit('debug', 'Extracting Java 8...');
+		client.emit('debug', `Extracting Java ${config.version}...`);
 		const zip = new AdmZip(downloadPath);
-
-		// Find root JDK directory
 		const jdkFolder = zip
 			.getEntries()
 			.find((entry) => entry.isDirectory)
@@ -106,11 +130,8 @@ export async function setupJava8(rootDir: string): Promise<string> {
 			throw new Error('Invalid JDK archive: Root directory not found');
 		}
 
-		// Extract and reorganize files
 		zip.extractAllTo(javaDir, true);
 		const jdkPath = join(javaDir, jdkFolder);
-
-		// Import fs only when needed
 		const { cpSync, rmSync } = require('node:fs');
 
 		// Move files to correct location and cleanup
@@ -118,10 +139,25 @@ export async function setupJava8(rootDir: string): Promise<string> {
 		rmSync(jdkPath, { recursive: true, force: true });
 		rmSync(downloadPath, { force: true });
 
-		client.emit('debug', 'Java 8 setup complete');
+		client.emit('debug', `Java ${config.version} setup complete`);
 		return javaExecutable;
 	} catch (error) {
-		const message = error instanceof Error ? error.message : String(error);
-		throw new Error(`Failed to setup Java 8: ${message}`);
+		throw new Error(
+			`Failed to setup Java ${config.version}: ${getErrorMessage(error)}`
+		);
 	}
 }
+
+// (async () => {
+// 	client.on('debug', console.log);
+// 	client.on('data', console.log);
+// 	const { handleProgress } = await import('@/utils/progress.ts');
+// 	client.on('progress', handleProgress);
+// 	const minorVersion = 6;
+// 	let java = 'java';
+// 	const version = await checkJava(java);
+// 	if ((!version || version > 8) && minorVersion < 7)
+// 		java = await setupJava8('out');
+// 	else if (!version) java = await setupJava21('out');
+// 	if (java) await checkJava(java);
+// })();
