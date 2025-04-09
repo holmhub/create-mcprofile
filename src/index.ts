@@ -10,7 +10,7 @@ import { createInterface } from 'node:readline';
 import { getAuth } from './client/auth.ts';
 import { launch } from './client/index.ts';
 import { getFromInput } from './utils/input.ts';
-import { handleProgress } from './utils/progress.ts';
+import { handleDownloadStatus, handleProgress } from './utils/progress.ts';
 import { selectFromList } from './utils/select.ts';
 import { selectVersion } from './utils/versions.ts';
 
@@ -161,6 +161,10 @@ async function main(): Promise<void> {
 	launcher.on('debug', console.log);
 	launcher.on('data', console.log);
 	launcher.on('progress', handleProgress);
+	const allowedSet = new Set(['java-download']);
+	launcher.on('download-status', (event) => {
+		allowedSet.has(event.type) && handleDownloadStatus(event);
+	});
 }
 
 main().finally(() => rl.close());

@@ -16,7 +16,7 @@ import { getMemory } from '../utils/memory.ts';
 import { getUniqueNonNullValues } from '../utils/other.ts';
 import { getOS } from '../utils/system.ts';
 import { downloadAndExtractPackage, downloadAsync } from './download.ts';
-import { checkJava, getJVM, setupJava8 } from './java.ts';
+import { checkJava, getJVM, setupJava21, setupJava8 } from './java.ts';
 
 export function initializeLauncherOptions(
 	options: ILauncherOptions
@@ -69,16 +69,6 @@ export async function init(options: ILauncherOptions) {
 
 	const versionFile = await getVersionManifest(options);
 	const { minorVersion } = parseVersion(versionFile.id);
-
-	// Handle Java path for legacy versions
-	let javaPath = options.javaPath || 'java';
-	if (minorVersion < 7) {
-		client.emit('debug', 'Legacy version detected, setting up Java 8...');
-		javaPath = await setupJava8(options.root);
-		options.javaPath = javaPath;
-	}
-
-	await checkJava(javaPath);
 	const modifyJson = await getCustomVersionManifest(options);
 	const nativePath = await getNatives(options, versionFile);
 
@@ -177,10 +167,31 @@ export async function init(options: ILauncherOptions) {
 
 	client.emit('arguments', launchArguments);
 
+	// Handle Java path selection
+	client.emit('debug', 'Checking Java installation...');
+	let javaPath = options.javaPath || 'java';
+	const javaVersion = await checkJava(javaPath);
+	if (!javaVersion) {
+		// No Java found, install appropriate version
+		javaPath =
+			minorVersion < 7
+				? await setupJava8(options.root)
+				: await setupJava21(options.root);
+	} else if (javaVersion > 8 && minorVersion < 7) {
+		// Java version too new for legacy MC
+		client.emit(
+			'debug',
+			`Java ${javaVersion} not compatible with MC ${minorVersion}, installing Java 8`
+		);
+		javaPath = await setupJava8(options.root);
+	}
+	options.javaPath = javaPath;
+
 	return startMinecraft(launchArguments, options);
 }
 
 function startMinecraft(launchArguments: string[], options: ILauncherOptions) {
+	client.emit('debug', '🚀 Launching Minecraft...');
 	const minecraft = spawn(
 		options.javaPath ? options.javaPath : 'java',
 		launchArguments,
@@ -346,7 +357,6 @@ async function getLaunchOptions(
 	args = args.filter(
 		(value) => typeof value === 'string' || typeof value === 'number'
 	);
-	client.emit('debug', '🚀 Launching Minecraft...');
 	return args;
 }
 
