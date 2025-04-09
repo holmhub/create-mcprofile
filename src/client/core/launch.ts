@@ -72,6 +72,8 @@ export async function init(options: ILauncherOptions) {
 	const modifyJson = await getCustomVersionManifest(options);
 	const nativePath = await getNatives(options, versionFile);
 
+	options.version.type = versionFile.type;
+
 	if (!existsSync(options.mcPath || '')) {
 		client.emit('debug', 'Attempting to download Minecraft version jar');
 		await getJar(options, versionFile);
