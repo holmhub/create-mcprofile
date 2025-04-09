@@ -1,12 +1,12 @@
-import AdmZip from 'adm-zip';
 import { exec } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { client } from '../index.ts';
+import { extractAllTo } from '../utils/adm-zip.ts';
+import { getErrorMessage } from '../utils/other.ts';
 import { getOS } from '../utils/system.ts';
 import { downloadAsync } from './download.ts';
-import { getErrorMessage } from '../utils/other.ts';
 
 const execAsync = promisify(exec);
 
@@ -120,21 +120,23 @@ async function setupJava(
 
 		// Extract JDK
 		client.emit('debug', `Extracting Java ${config.version}...`);
-		const zip = new AdmZip(downloadPath);
-		const jdkFolder = zip
-			.getEntries()
-			.find((entry) => entry.isDirectory)
-			?.entryName.replace(/\/$/, '');
+		extractAllTo(downloadPath, javaDir, true, (task, total) => {
+			client.emit('progress', {
+				type: 'extract',
+				task: task,
+				total: total,
+			});
+		});
 
-		if (!jdkFolder) {
-			throw new Error('Invalid JDK archive: Root directory not found');
-		}
-
-		zip.extractAllTo(javaDir, true);
+		// Get JDK path
+		const jdkFolder = readdirSync(javaDir, { withFileTypes: true }).find(
+			(file) => file.isDirectory()
+		)?.name;
+		if (!jdkFolder) throw new Error('Failed to find JDK folder');
 		const jdkPath = join(javaDir, jdkFolder);
-		const { cpSync, rmSync } = require('node:fs');
 
 		// Move files to correct location and cleanup
+		const { cpSync, rmSync } = require('node:fs');
 		cpSync(jdkPath, javaDir, { recursive: true });
 		rmSync(jdkPath, { recursive: true, force: true });
 		rmSync(downloadPath, { force: true });
@@ -153,7 +155,14 @@ async function setupJava(
 // 	client.on('data', console.log);
 // 	const { handleProgress } = await import('@/utils/progress.ts');
 // 	client.on('progress', handleProgress);
-// 	const minorVersion = 6;
+// 	const { rmSync } = require('node:fs');
+// 	try {
+// 		rmSync('out/runtime/java-21', {
+// 			recursive: true,
+// 			force: true,
+// 		});
+// 	} catch {}
+// 	const minorVersion = 14;
 // 	let java = 'java';
 // 	const version = await checkJava(java);
 // 	if ((!version || version > 8) && minorVersion < 7)
