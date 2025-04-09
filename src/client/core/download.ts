@@ -9,6 +9,15 @@ import { parseRule } from '../utils/system.ts';
 
 let counter = 0;
 
+/**
+ * Downloads a file from a URL with progress tracking
+ * @param url - Source URL
+ * @param directory - Target directory
+ * @param name - File name
+ * @param retry - Whether to retry on failure
+ * @param type - Download type for progress tracking
+ * @param timeoutms - Download timeout in milliseconds
+ */
 export async function downloadAsync(
 	url: string,
 	directory: string,
@@ -18,37 +27,35 @@ export async function downloadAsync(
 	timeoutms = 50000
 ): Promise<void> {
 	const filePath = join(directory, name);
+	mkdirSync(directory, { recursive: true });
 
 	try {
-		mkdirSync(directory, { recursive: true });
+		// Setup fetch with timeout
 		const controller = new AbortController();
 		const timeout = setTimeout(() => controller.abort(), timeoutms);
-
 		const response = await fetch(url, {
 			signal: controller.signal,
 			headers: { Connection: 'keep-alive' },
 		});
 		clearTimeout(timeout);
 
+		// Handle response errors
 		if (!response.ok) {
 			if (response.status === 404) {
-				client.emit(
-					'debug',
-					`Failed to download ${url} due to: File not found...`
-				);
+				client.emit('debug', `File not found: ${url}`);
 				return;
 			}
-			throw new Error(`HTTP error! status: ${response.status}`);
+			throw new Error(`HTTP ${response.status}`);
 		}
 
+		// Setup file writing
 		const totalBytes = Number(response.headers.get('content-length'));
-		let receivedBytes = 0;
-
 		const file = createWriteStream(filePath);
 		const reader = response.body?.getReader();
-
 		if (!reader) throw new Error('No reader available');
 
+		// Download and write file
+		let receivedBytes = 0;
 		while (true) {
 			const { done, value } = await reader.read();
 			if (done) break;
@@ -56,6 +63,7 @@ export async function downloadAsync(
 			receivedBytes += value.length;
 			file.write(value);
 
+			// Report progress
 			client.emit('download-status', {
 				name,
 				type,
@@ -64,13 +72,16 @@ export async function downloadAsync(
 			});
 		}
 
+		// Finish writing
 		file.end();
-
-		await new Promise<void>((resolve) => file.once('finish', () => resolve()));
+		await new Promise<void>((resolve) => file.once('finish', resolve));
 		client.emit('download', name);
 	} catch {
+		// Cleanup and retry if needed
 		if (existsSync(filePath)) unlinkSync(filePath);
-		if (retry) downloadAsync(url, directory, name, false, type);
+		if (retry) {
+			await downloadAsync(url, directory, name, false, type);
+		}
 	}
 }
 

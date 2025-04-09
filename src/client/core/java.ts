@@ -109,20 +109,14 @@ async function setupJava(
 
 		if (!existsSync(downloadPath)) {
 			client.emit('debug', `Downloading Java ${config.version}...`);
-			await downloadAsync(
-				url,
-				javaDir,
-				fileName,
-				true,
-				`java${config.version}`
-			);
+			await downloadAsync(url, javaDir, fileName, true, 'java-download');
 		}
 
 		// Extract JDK
 		client.emit('debug', `Extracting Java ${config.version}...`);
 		extractSync(downloadPath, javaDir, true, (task, total) => {
 			client.emit('progress', {
-				type: 'extract',
+				type: 'java-extract ',
 				task: task,
 				total: total,
 			});
@@ -153,8 +147,11 @@ async function setupJava(
 // (async () => {
 // 	client.on('debug', console.log);
 // 	client.on('data', console.log);
-// 	const { handleProgress } = await import('@/utils/progress.ts');
+// 	const { handleProgress, handleDownloadStatus } = await import(
+// 		'@/utils/progress.ts'
+// 	);
 // 	client.on('progress', handleProgress);
+// 	client.on('download-status', handleDownloadStatus);
 // 	const { rmSync } = require('node:fs');
 // 	try {
 // 		rmSync('out/runtime/java-21', {
