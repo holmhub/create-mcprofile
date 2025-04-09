@@ -38,7 +38,7 @@ export function iniParse<T>(iniString: string): T {
 			// Convert value types
 			if (value.toLowerCase() === 'true') currentSection[key] = true;
 			else if (value.toLowerCase() === 'false') currentSection[key] = false;
-			else if (!Number.isNaN(Number(value)))
+			else if (!(Number.isNaN(Number(value)) || value.includes('.')))
 				currentSection[key] = Number(value);
 			else if (value.includes(','))
 				currentSection[key] = value.split(',').map((v) => v.trim());
