@@ -20,7 +20,7 @@ import { join, resolve } from 'node:path';
 const USERNAME = process.env.USERNAME || 'Player';
 const MC_PATH = join(process.env.APPDATA || '', '.minecraft');
 const VERSIONS_PATH = join(MC_PATH, 'versions');
-const SETTINGS_FILE = 'launcher-settings.ini';
+const SETTINGS_FILE = 'settings.ini';
 const SETTINGS_PATH = resolve(
 	join(process.env.USERPROFILE || '', '.mcprofile', SETTINGS_FILE)
 );
