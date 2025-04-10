@@ -1,19 +1,33 @@
 {
-  "name": "bun-mc-launcher",
-  "version": "1.0.0",
-  "module": "src/index.ts",
-  "private": false,
+  "name": "create-mcprofile",
+  "version": "0.0.1",
   "type": "module",
+  "license": "MIT",
+  "author": "holmityd",
+  "bin": "./index.js",
+  "files": [
+    "index.js",
+    "dist"
+  ],
+  "module": "src/index.ts",
   "scripts": {
     "dev": "bun --watch .",
     "build": "rm -rf dist && bun build --target=bun --minify --sourcemap=none --outdir=dist ./src/index.ts",
     "start": "bun run dist/index.js",
-    "compile": "bun build --compile --minify --sourcemap --bytecode --bytecode . --outfile dist/myapp",
+    "compile": "bun build --compile --minify --sourcemap --bytecode . --outfile dist/myapp",
     "test": "bun test",
     "format": "biome format --write ./src",
     "lint": "biome lint ./src",
     "check": "biome check ./src"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/holmityd/create-mcprofile.git"
+  },
+  "bugs": {
+    "url": "https://github.com/holmityd/create-mcprofile/issues"
+  },
+  "homepage": "https://github.com/holmityd/create-mcprofile#readme",
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
     "@types/adm-zip": "^0.5.7",
