@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.10](https://github.com/holmityd/create-mcprofile/compare/v0.0.9...v0.0.10) (2025-04-10)
+
+
+### Features
+
+* **launcher:** add support for Fabric loader and refactor version handling ([20dfbbb](https://github.com/holmityd/create-mcprofile/commit/20dfbbb13eef678172d1ca8ee7c1a38e9ea428f5))
+
 ### 0.0.1 (2025-04-10)
 
 ### Features
