@@ -4,7 +4,9 @@
   "type": "module",
   "license": "MIT",
   "author": "holmityd",
-  "bin": "./index.js",
+  "bin": {
+    "create-mcprofile": "index.js"
+  },
   "files": [
     "index.js",
     "dist"
