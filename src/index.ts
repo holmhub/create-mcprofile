@@ -1,4 +1,8 @@
-import type { LauncherSettings, ProfileSettings } from '@/cli/types.ts';
+import type {
+	LauncherSettings,
+	LoaderType,
+	ProfileSettings,
+} from '@/cli/types.ts';
 import { formatInColumns } from '@/cli/utils/format.ts';
 import { readIniFile, saveIniFile } from '@/cli/utils/ini.ts';
 import { getAuth } from '@/client/auth.ts';
@@ -16,6 +20,12 @@ import {
 } from '@clack/prompts';
 import { existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import {
+	getAvailableVersions,
+	getFabricVersions,
+	setupFabric,
+	type GameVersion,
+} from './client/loaders/fabric.ts';
 
 const USERNAME = process.env.USERNAME || 'Player';
 const MC_PATH = join(process.env.APPDATA || '', '.minecraft');
@@ -69,12 +79,13 @@ async function main() {
 
 	const profileSettings = readIniFile<ProfileSettings>(profileSettingsPath);
 	const { Name, GameDirectory, ProfilesDirectory } = settings;
-	const { Version, RAM } = profileSettings;
+	const { Version, LoaderManifest, RAM } = profileSettings;
 	startGame({
 		name: Name,
 		gameDir: GameDirectory,
 		profilesDir: ProfilesDirectory,
 		profile,
+		loaderManifest: LoaderManifest,
 		version: Version,
 		ram: RAM,
 	});
@@ -131,6 +142,17 @@ async function createNewProfile(
 	settings: LauncherSettings,
 	declaredName?: string
 ): Promise<string | undefined> {
+	// Select loader type
+	const loader = (await select({
+		message: 'Select loader',
+		options: [
+			{ value: 'vanilla', label: 'Vanilla' },
+			{ value: 'fabric', label: 'Fabric' },
+			// { value: 'forge', label: 'Forge' },
+			// { value: 'quilt', label: 'Quilt' },
+		],
+	})) as LoaderType;
+
 	let version = (await select<string>({
 		message: 'Select Minecraft version to install',
 		options: [
@@ -145,21 +167,36 @@ async function createNewProfile(
 			{ value: 'other', label: 'Other' },
 		],
 	})) as string;
-
 	if (version === 'other') {
-		version = await selectMinecraftVersion(settings);
+		version = await selectMinecraftVersion(settings, loader);
 	}
 
-	// Select mod loader type
-	const loader = await select({
-		message: 'Select mod loader',
-		options: [
-			{ value: 'vanilla', label: 'Vanilla' },
-			{ value: 'fabric', label: 'Fabric' },
-			{ value: 'forge', label: 'Forge' },
-			{ value: 'quilt', label: 'Quilt' },
-		],
-	});
+	// Mod loader selection
+	let loaderVersion: string | undefined;
+	if (loader === 'fabric') {
+		const fabricVersions = await getAvailableVersions();
+		const filteredVersions = fabricVersions.map((v) => v.version);
+
+		note(
+			formatInColumns(filteredVersions, {
+				columns: 5,
+				header: '📦 Available Fabric Versions:',
+				padding: 15,
+			})
+		);
+
+		// Prompt user to enter specific version number
+		// Validate that input is not empty and exists in the manifest
+		loaderVersion = (await text({
+			message: 'Select Fabric version',
+			placeholder: filteredVersions[0],
+			validate(value) {
+				if (!value) return 'Version number is required';
+				if (!filteredVersions.includes(value))
+					return 'Version not found in manifest';
+			},
+		})) as string;
+	}
 
 	// RAM allocation function defined below
 	const ram = await selectRAMAllocation();
@@ -183,10 +220,11 @@ async function createNewProfile(
 		[
 			'📝 Profile Summary',
 			'─'.repeat(20),
-			`Version:      ${version}`,
-			`Mod Loader:   ${String(loader)}`,
-			`RAM:          ${ram}`,
-			`Profile Name: ${profileName}`,
+			`Version:        ${version}`,
+			`Mod Loader:     ${String(loader)}`,
+			`Loader Version: ${loaderVersion || 'N/A'}`,
+			`RAM:            ${ram}`,
+			`Profile Name:   ${profileName}`,
 		].join('\n')
 	);
 
@@ -203,19 +241,57 @@ async function createNewProfile(
 
 	const profilePath = join(settings.ProfilesDirectory, profileName);
 	mkdirSync(profilePath, { recursive: true });
+	let loaderManifest: string | undefined;
+	if (loader === 'fabric') {
+		const s = spinner();
+		s.start('Downloading Fabric...');
+		loaderManifest = await setupFabric({
+			directory: profilePath,
+			gameVersion: version,
+			loaderVersion,
+		});
+		s.stop('Fabric downloaded successfully! ✨');
+	}
 
 	// Save profile settings
 	const profileSettings: ProfileSettings = {
 		Version: version,
-		Loader: loader as Exclude<typeof loader, symbol>,
+		LoaderManifest: loaderManifest,
 		RAM: ram,
 	};
 	saveIniFile(profileSettings, join(profilePath, 'profile-settings.ini'));
 	return profileName;
 }
 
+async function getVanillaVersions(gameDir: string): Promise<GameVersion[]> {
+	const { versions } = await getVersionsManifest({
+		root: gameDir,
+		version: { number: '' },
+	});
+	return versions.map((v) => ({
+		version: v.id,
+		stable: v.type === 'release',
+	}));
+}
+
+async function getVersions(
+	settings: LauncherSettings,
+	loader: LoaderType,
+	versionType: 'release' | 'all' = 'release'
+): Promise<string[]> {
+	const versions =
+		loader === 'fabric'
+			? await getFabricVersions()
+			: await getVanillaVersions(settings.GameDirectory);
+
+	return versions
+		.filter((v) => v.stable === (versionType === 'release'))
+		.map((v) => v.version);
+}
+
 async function selectMinecraftVersion(
-	settings: LauncherSettings
+	settings: LauncherSettings,
+	loader?: LoaderType
 ): Promise<string> {
 	// Let user choose between release versions only or all versions (including snapshots)
 	const versionType = await select({
@@ -226,13 +302,11 @@ async function selectMinecraftVersion(
 		],
 	});
 
-	const manifest = await getVersionsManifest({
-		root: settings.GameDirectory,
-		version: { number: '' },
-	});
-	const filteredVersions = manifest.versions
-		.filter((version) => versionType === 'all' || version.type === 'release')
-		.map((version) => version.id);
+	const filteredVersions = await getVersions(
+		settings,
+		loader || 'vanilla',
+		versionType as Exclude<typeof versionType, symbol>
+	);
 
 	// Display available versions in a formatted column layout
 	// Use different column settings for all versions vs release only
@@ -294,6 +368,7 @@ function startGame({
 	gameDir,
 	profilesDir,
 	version,
+	loaderManifest,
 	profile,
 	ram,
 }: {
@@ -301,6 +376,7 @@ function startGame({
 	gameDir: string;
 	profilesDir: string;
 	version: string;
+	loaderManifest?: string;
 	profile: string;
 	ram: string;
 }) {
@@ -319,7 +395,7 @@ function startGame({
 		root: gameDir,
 		version: {
 			number: version,
-			custom: profile,
+			custom: loaderManifest,
 		},
 		memory: {
 			max: `${maxRam}G`,
@@ -328,6 +404,7 @@ function startGame({
 		overrides: {
 			maxSockets: 4,
 			gameDirectory: join(profilesDir, profile),
+			directory: join(profilesDir, profile),
 		},
 	});
 

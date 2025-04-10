@@ -68,7 +68,7 @@ export async function getJar(
 		mkdirSync(options.directory, { recursive: true });
 
 		// Prepare file paths
-		const jarFileName = options.version.custom ?? options.version.number;
+		const jarFileName = options.version.custom || options.version.number;
 		const jarPath = join(options.directory, `${jarFileName}.jar`);
 		const jsonPath = join(options.directory, `${options.version.number}.json`);
 
@@ -111,9 +111,7 @@ export async function getCustomVersionManifest(
 	}
 
 	const customVersionPath = join(
-		options.root,
-		'versions',
-		options.version.custom,
+		options.directory || '',
 		`${options.version.custom}.json`
 	);
 

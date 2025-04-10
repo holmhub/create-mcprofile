@@ -1,3 +1,5 @@
+import type { LoaderType } from '@/cli/types';
+
 type OS = 'windows' | 'osx' | 'linux';
 
 interface IOverrides {
@@ -81,6 +83,10 @@ export interface ILauncherOptions {
 	directory?: string;
 	mcPath?: string;
 	server?: boolean;
+	loader?: {
+		name: LoaderType;
+		version?: string;
+	};
 	/**
 	 * Path or URL to the client package zip file.
 	 */

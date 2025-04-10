@@ -1,3 +1,5 @@
+export type LoaderType = 'vanilla' | 'fabric' | 'forge' | 'quilt';
+
 export type LauncherSettings = {
 	Name: string;
 	GameDirectory: string;
@@ -6,6 +8,6 @@ export type LauncherSettings = {
 
 export type ProfileSettings = {
 	Version: string;
-	Loader: 'vanilla' | 'fabric' | 'forge' | 'quilt';
+	LoaderManifest?: string;
 	RAM: string;
 };

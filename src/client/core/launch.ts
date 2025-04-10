@@ -47,14 +47,10 @@ export function initializeLauncherOptions(
 
 	options.mcPath =
 		options.overrides.minecraftJar ||
-		(options.version.custom
-			? join(
-					options.root,
-					'versions',
-					options.version.custom,
-					`${options.version.custom}.jar`
-				)
-			: join(options.directory, `${options.version.number}.jar`));
+		join(
+			options.directory,
+			`${options.version.custom || options.version.number}.jar`
+		);
 
 	return options;
 }
