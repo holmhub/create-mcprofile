@@ -1,11 +1,11 @@
+import { setupFabric } from '@/client/loaders/fabric';
 import { note, select, spinner, text } from '@clack/prompts';
-import type { LauncherSettings, LoaderType, ProfileSettings } from './types.ts';
 import { existsSync, mkdirSync, readdirSync } from 'node:fs';
-import { getAvailableVersions, setupFabric } from '@/client/loaders/fabric';
 import { join } from 'node:path';
-import { saveIniFile } from './utils/ini.ts';
-import { formatInColumns } from './utils/format.ts';
+import { getLoader } from './loader.ts';
 import { selectRAMAllocation } from './ram.ts';
+import type { LauncherSettings, LoaderType, ProfileSettings } from './types.ts';
+import { saveIniFile } from './utils/ini.ts';
 import { selectMinecraftVersion } from './versions.ts';
 
 export async function selectProfile(
@@ -68,31 +68,7 @@ export async function createNewProfile(
 	}
 
 	// Mod loader selection
-	let loaderVersion: string | undefined;
-	if (loader === 'fabric') {
-		const fabricVersions = await getAvailableVersions();
-		const filteredVersions = fabricVersions.map((v) => v.version);
-
-		note(
-			formatInColumns(filteredVersions, {
-				columns: 5,
-				header: '📦 Available Fabric Versions:',
-				padding: 15,
-			})
-		);
-
-		// Prompt user to enter specific version number
-		// Validate that input is not empty and exists in the manifest
-		loaderVersion = (await text({
-			message: 'Select Fabric version',
-			placeholder: filteredVersions[0],
-			validate(value) {
-				if (!value) return 'Version number is required';
-				if (!filteredVersions.includes(value))
-					return 'Version not found in manifest';
-			},
-		})) as string;
-	}
+	const loaderVersion = await getLoader(loader);
 
 	// RAM allocation function defined below
 	const ram = await selectRAMAllocation();

@@ -1,10 +1,10 @@
+import { selectProfile } from '@/cli/profiles.ts';
+import { getLauncherSettings, getProfileSettings } from '@/cli/settings.ts';
 import { getAuth } from '@/client/auth.ts';
 import { launch } from '@/client/index.ts';
 import { handleDownloadStatus, handleProgress } from '@/utils/progress.ts';
 import { cancel, intro, outro } from '@clack/prompts';
 import { join } from 'node:path';
-import { selectProfile } from './cli/profiles.ts';
-import { getLauncherSettings, getProfileSettings } from './cli/settings.ts';
 
 main().catch((err) => {
 	cancel(`An error occurred: ${err.message}`);
