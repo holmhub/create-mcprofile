@@ -15,13 +15,13 @@ import {
 	text,
 } from '@clack/prompts';
 import { existsSync, mkdirSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 
 const USERNAME = process.env.USERNAME || 'Player';
 const MC_PATH = join(process.env.APPDATA || '', '.minecraft');
 const VERSIONS_PATH = join(MC_PATH, 'versions');
 const SETTINGS_FILE = 'launcher-settings.ini';
-const SETTINGS_PATH = join('out', SETTINGS_FILE);
+const SETTINGS_PATH = resolve(join('out', SETTINGS_FILE));
 
 main().catch((err) => {
 	cancel(`An error occurred: ${err.message}`);
