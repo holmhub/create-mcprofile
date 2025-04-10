@@ -12,13 +12,14 @@
   "module": "src/index.ts",
   "scripts": {
     "dev": "bun --watch .",
-    "build": "rm -rf dist && bun build --target=bun --minify --sourcemap=none --outdir=dist ./src/index.ts",
+    "build": "rm -rf dist && bun build --target=node --minify --sourcemap=none --outdir=dist ./src/index.ts",
     "start": "bun run dist/index.js",
     "compile": "bun build --compile --minify --sourcemap --bytecode . --outfile dist/myapp",
     "test": "bun test",
     "format": "biome format --write ./src",
     "lint": "biome lint ./src",
-    "check": "biome check ./src"
+    "check": "biome check ./src",
+    "prepublishOnly": "bun run build"
   },
   "repository": {
     "type": "git",
