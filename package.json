@@ -21,6 +21,7 @@
     "format": "biome format --write ./src",
     "lint": "biome lint ./src",
     "check": "biome check ./src",
+    "prepare": "bun run build",
     "prepublishOnly": "bun run build",
     "release": "npx standard-version && git push --follow-tags origin main && npm publish"
   },
