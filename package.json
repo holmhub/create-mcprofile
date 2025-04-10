@@ -20,7 +20,7 @@
     "lint": "biome lint ./src",
     "check": "biome check ./src",
     "prepublishOnly": "bun run build",
-    "publish": "npx standard-version && git push --follow-tags origin main && npm publish"
+    "release": "npx standard-version && git push --follow-tags origin main && npm publish"
   },
   "repository": {
     "type": "git",
