@@ -10,6 +10,32 @@ import { getVersionsManifest } from '@/client/handlers/version.ts';
 export async function selectMinecraftVersion(
 	settings: LauncherSettings,
 	loader?: LoaderType
+) {
+	const latest = (await getVanillaVersions(settings.GameDirectory)).find(
+		(i) => i.stable
+	) as GameVersion;
+	let version = (await select<string>({
+		message: 'Select Minecraft version to install',
+		options: [
+			{ value: latest.version, label: `${latest.version} (Latest Release)` },
+			{ value: '1.20.1', label: '1.20.1' },
+			{ value: '1.19.4', label: '1.19.4' },
+			{ value: '1.18.2', label: '1.18.2' },
+			{ value: '1.17.1', label: '1.17.1' },
+			{ value: '1.16.5', label: '1.16.5' },
+			{ value: '1.12.2', label: '1.12.2' },
+			{ value: 'other', label: 'Other' },
+		],
+	})) as string;
+	if (version === 'other') {
+		version = await selectCustomVersion(settings, loader);
+	}
+	return version;
+}
+
+export async function selectCustomVersion(
+	settings: LauncherSettings,
+	loader?: LoaderType
 ): Promise<string> {
 	// Let user choose between release versions only or all versions (including snapshots)
 	const versionType = await select({

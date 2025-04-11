@@ -49,23 +49,7 @@ export async function createNewProfile(
 		],
 	})) as LoaderType;
 
-	let version = (await select<string>({
-		message: 'Select Minecraft version to install',
-		options: [
-			{ value: '1.20.1', label: '1.20.1 (Latest Release)' },
-			{ value: '1.19.4', label: '1.19.4' },
-			{ value: '1.18.2', label: '1.18.2' },
-			{ value: '1.17.1', label: '1.17.1' },
-			{ value: '1.16.5', label: '1.16.5 (Most Modded)' },
-			{ value: '1.12.2', label: '1.12.2 (Classic Modded)' },
-			{ value: '1.8.9', label: '1.8.9 (PvP Classic)' },
-			{ value: '1.7.10', label: '1.7.10 (Legacy Modded)' },
-			{ value: 'other', label: 'Other' },
-		],
-	})) as string;
-	if (version === 'other') {
-		version = await selectMinecraftVersion(settings, loader);
-	}
+	const version = await selectMinecraftVersion(settings, loader);
 
 	// Mod loader selection
 	const loaderVersion = await getLoader(loader);
