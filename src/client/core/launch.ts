@@ -16,7 +16,7 @@ import { getMemory } from '../utils/memory.ts';
 import { getUniqueNonNullValues } from '../utils/other.ts';
 import { getOS } from '../utils/system.ts';
 import { getLaunchOptions } from './arguments.ts';
-import { checkJava, getJVM, setupJava21, setupJava8 } from './java.ts';
+import { getJVM, selectJavaPath } from './java.ts';
 import { configureLog4jForVersion } from './prepare.ts';
 
 export function initializeLauncherOptions(
@@ -166,24 +166,7 @@ export async function init(options: ILauncherOptions) {
 	client.emit('arguments', launchArguments);
 
 	// Handle Java path selection
-	client.emit('debug', 'Checking Java installation...');
-	let javaPath = options.javaPath || 'java';
-	const javaVersion = await checkJava(javaPath);
-	if (!javaVersion) {
-		// No Java found, install appropriate version
-		javaPath =
-			minorVersion < 7
-				? await setupJava8(options.root)
-				: await setupJava21(options.root);
-	} else if (javaVersion > 8 && minorVersion < 7) {
-		// Java version too new for legacy MC
-		client.emit(
-			'debug',
-			`Java ${javaVersion} not compatible with MC ${minorVersion}, installing Java 8`
-		);
-		javaPath = await setupJava8(options.root);
-	}
-	options.javaPath = javaPath;
+	options.javaPath = await selectJavaPath(options);
 
 	return startMinecraft(launchArguments, options);
 }

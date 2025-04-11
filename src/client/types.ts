@@ -98,10 +98,6 @@ export interface ILauncherOptions {
 	 */
 	os?: OS;
 	/**
-	 * Array of custom Minecraft arguments.
-	 */
-	customLaunchArgs?: string[];
-	/**
 	 * Array of custom Java arguments
 	 */
 	customArgs?: string[];

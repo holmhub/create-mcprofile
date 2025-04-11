@@ -12,7 +12,7 @@ export async function getLaunchOptions(
 	version: IVersionManifest,
 	modification?: IVersionManifest
 ) {
-	const { window, proxy, features, customLaunchArgs } = options;
+	const { window, proxy, features, customArgs } = options;
 
 	const versionArgs =
 		version.minecraftArguments?.split(' ') ?? version.arguments.game;
@@ -28,7 +28,7 @@ export async function getLaunchOptions(
 	if (args.length < minArgs) args = args.concat(versionArgs);
 
 	// Add custom arguments
-	if (customLaunchArgs) args = args.concat(customLaunchArgs);
+	if (customArgs) args = args.concat(customArgs);
 
 	// Handle demo mode
 	if (

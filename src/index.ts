@@ -74,7 +74,6 @@ function startGame({
 		overrides: {
 			maxSockets: 4,
 			gameDirectory: join(profilesDir, profile),
-			directory: join(profilesDir, profile),
 		},
 	});
 

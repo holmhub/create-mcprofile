@@ -7,31 +7,66 @@ import { extractSync } from '../utils/adm-zip.ts';
 import { getErrorMessage } from '../utils/other.ts';
 import { getOS } from '../utils/system.ts';
 import { downloadAsync } from './download.ts';
+import { parseVersion } from '../handlers/version.ts';
+import type { ILauncherOptions } from '../types.ts';
 
-const execAsync = promisify(exec);
-
-interface JavaSetupConfig {
-	version: '8' | '21';
-	baseUrl: string;
-	urlPaths: {
-		windows: string;
-		osx: string;
-		linux: string;
-	};
-}
-
+const JAVA_LTS = 21;
+const JAVA_LEGACY = 6;
 const JVM_OPTIONS = {
 	windows:
 		'-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump',
 	osx: '-XstartOnFirstThread',
 	linux: '-Xss1M',
 } as const;
+const execAsync = promisify(exec);
 
 /**
- * Checks Java installation and returns version number
- * @returns Version number (e.g., 8, 11, 17) or undefined if not found
+ * Selects appropriate Java version for Minecraft and returns the path to Java executable
+ * @param options Launcher options containing Java path and Minecraft version
+ * @returns Path to the Java executable
  */
-export async function checkJava(java: string): Promise<number | undefined> {
+export async function selectJavaPath(
+	options: ILauncherOptions
+): Promise<string> {
+	client.emit('debug', 'Checking Java installation...');
+	const javaPath = options.javaPath || 'java';
+	const minorVersion = parseVersion(options.version.number).minorVersion;
+	const javaVersion = await getJavaVersion(javaPath);
+
+	if (!javaVersion) {
+		// No Java found, install appropriate version
+		return minorVersion < 7
+			? await installJDK(JAVA_LEGACY, options.root)
+			: await installJDK(JAVA_LTS, options.root);
+	}
+
+	if (javaVersion > JAVA_LEGACY && minorVersion < 7) {
+		// Java version too new for legacy MC
+		client.emit(
+			'debug',
+			`Java ${javaVersion} not compatible with MC ${options.version.number}, installing Java ${JAVA_LEGACY}`
+		);
+		return await installJDK(JAVA_LEGACY, options.root);
+	}
+
+	return javaPath;
+}
+
+/**
+ * Gets JVM options specific to the current operating system
+ * @returns JVM argument string for the current OS
+ */
+export function getJVM(): string {
+	const os = getOS();
+	return JVM_OPTIONS[os] || '';
+}
+
+/**
+ * Checks installed Java version
+ * @param javaPath Path to Java executable
+ * @returns Java major version number or undefined if not found
+ */
+async function getJavaVersion(java: string): Promise<number | undefined> {
 	try {
 		const { stderr = '' } = await execAsync(`"${java}" -version`);
 		const version = Number(stderr.match(/"(\d+)/)?.[1]);
@@ -45,75 +80,51 @@ export async function checkJava(java: string): Promise<number | undefined> {
 }
 
 /**
- * Gets JVM options for the current operating system
+ * Fetches download URL for Azul Zulu JDK
+ * @param javaVersion Java major version number
+ * @returns Download URL for the JDK
  */
-export function getJVM(): string {
+async function getJDKDownloadUrl(version: number): Promise<string> {
 	const os = getOS();
-	return JVM_OPTIONS[os] || '';
+	const osMap = { windows: 'windows', osx: 'macos', linux: 'linux' };
+	const response = await fetch(
+		`https://api.azul.com/zulu/download/community/v1.0/bundles/latest/?jdk_version=${version}&bundle_type=jdk&arch=x64&ext=zip&os=${osMap[os]}`
+	);
+	const release = (await response.json()) as { url: string };
+	return release.url;
 }
 
 /**
- * Downloads and extracts Java 8 for legacy Minecraft versions
- * @returns Path to the java executable
+ * Downloads and installs Java Development Kit
+ * @param javaVersion Java major version to install
+ * @param installDir Base directory for installation
+ * @returns Path to the installed Java executable
  */
-export function setupJava8(rootDir: string): Promise<string> {
-	return setupJava(rootDir, {
-		version: '8',
-		baseUrl:
-			'https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u392-b08',
-		urlPaths: {
-			windows: 'OpenJDK8U-jdk_x64_windows_hotspot_8u392b08.zip',
-			osx: 'OpenJDK8U-jdk_x64_mac_hotspot_8u392b08.tar.gz',
-			linux: 'OpenJDK8U-jdk_x64_linux_hotspot_8u392b08.tar.gz',
-		},
-	});
-}
-
-/**
- * Downloads and extracts Java 21 for modern Minecraft versions
- * @returns Path to the java executable
- */
-export function setupJava21(rootDir: string): Promise<string> {
-	return setupJava(rootDir, {
-		version: '21',
-		baseUrl:
-			'https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.1%2B12',
-		urlPaths: {
-			windows: 'OpenJDK21U-jdk_x64_windows_hotspot_21.0.1_12.zip',
-			osx: 'OpenJDK21U-jdk_x64_mac_hotspot_21.0.1_12.tar.gz',
-			linux: 'OpenJDK21U-jdk_x64_linux_hotspot_21.0.1_12.tar.gz',
-		},
-	});
-}
-
-async function setupJava(
-	rootDir: string,
-	config: JavaSetupConfig
-): Promise<string> {
+async function installJDK(version: number, dir: string) {
 	const os = getOS();
-	const javaDir = join(rootDir, 'runtime', `java-${config.version}`);
+	const javaDir = join(dir, 'runtime', `java-${version}`);
 	const javaExecutable =
 		os === 'windows'
 			? join(javaDir, 'bin', 'java.exe')
 			: join(javaDir, 'bin', 'java');
 
 	if (existsSync(javaExecutable)) {
-		client.emit('debug', `Using existing Java ${config.version} installation`);
+		client.emit('debug', `Using existing Java ${version} installation`);
 		return javaExecutable;
 	}
 
 	try {
-		const url = `${config.baseUrl}/${config.urlPaths[os]}`;
-		const fileName = `java${config.version}.${os === 'windows' ? 'zip' : 'tar.gz'}`;
+		const url = await getJDKDownloadUrl(version);
+		const fileName = `java${version}.${os === 'windows' ? 'zip' : 'tar.gz'}`;
 		const downloadPath = join(javaDir, fileName);
 
 		if (!existsSync(downloadPath)) {
-			client.emit('debug', `Downloading Java ${config.version}...`);
+			client.emit('debug', `Downloading Java ${version}...`);
 			await downloadAsync(url, javaDir, fileName, true, 'java-download');
 		}
 
 		// Extract JDK
-		client.emit('debug', `Extracting Java ${config.version}...`);
+		client.emit('debug', `Extracting Java ${version}...`);
 		extractSync(downloadPath, javaDir, true, (task, total) => {
 			client.emit('progress', {
 				type: 'java-extract ',
@@ -135,11 +146,11 @@ async function setupJava(
 		rmSync(jdkPath, { recursive: true, force: true });
 		rmSync(downloadPath, { force: true });
 
-		client.emit('debug', `Java ${config.version} setup complete`);
+		client.emit('debug', `Java ${version} setup complete`);
 		return javaExecutable;
 	} catch (error) {
 		throw new Error(
-			`Failed to setup Java ${config.version}: ${getErrorMessage(error)}`
+			`Failed to setup Java ${version}: ${getErrorMessage(error)}`
 		);
 	}
 }
@@ -166,4 +177,5 @@ async function setupJava(
 // 		java = await setupJava8('out');
 // 	else if (!version) java = await setupJava21('out');
 // 	if (java) await checkJava(java);
+// 	console.log(await getAzulUrl(21));
 // })();
