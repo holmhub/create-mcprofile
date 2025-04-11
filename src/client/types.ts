@@ -82,19 +82,10 @@ interface IOverrides {
 export interface ILauncherOptions {
 	directory?: string;
 	mcPath?: string;
-	server?: boolean;
 	loader?: {
 		name: LoaderType;
 		version?: string;
 	};
-	/**
-	 * Path or URL to the client package zip file.
-	 */
-	clientPackage?: string;
-	/**
-	 * if true MCLC will remove the client package zip file after its finished extracting.
-	 */
-	removePackage?: boolean;
 	/**
 	 * Path where you want the launcher to work in.
 	 * This will usually be your .minecraft folder

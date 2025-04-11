@@ -1,10 +1,9 @@
-import AdmZip from 'adm-zip';
 import { createHash } from 'node:crypto';
 import { createWriteStream, existsSync, mkdirSync, unlinkSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join, sep } from 'node:path';
 import { client } from '../index.ts';
-import type { ILauncherOptions, ILibrary } from '../types.ts';
+import type { ILibrary } from '../types.ts';
 import { parseRule } from '../utils/system.ts';
 
 let counter = 0;
@@ -83,28 +82,6 @@ export async function downloadAsync(
 			await downloadAsync(url, directory, name, false, type);
 		}
 	}
-}
-
-export async function downloadAndExtractPackage(options: ILauncherOptions) {
-	const { clientPackage, root, removePackage } = options;
-	if (!clientPackage) return;
-
-	if (clientPackage.startsWith('http')) {
-		await downloadAsync(
-			clientPackage,
-			root,
-			'clientPackage.zip',
-			true,
-			'client-package'
-		);
-		options.clientPackage = join(root, 'clientPackage.zip');
-	}
-
-	const zip = new AdmZip(clientPackage);
-	zip.extractAllTo(root, true);
-	if (removePackage) unlinkSync(clientPackage);
-
-	return client.emit('package-extract', true);
 }
 
 export async function downloadToDirectory(

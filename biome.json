@@ -44,7 +44,8 @@
 				"noProcessEnv": "off",
 				"noCommonJs": "off",
 				"noSecrets": "off",
-				"useExplicitType": "off"
+				"useExplicitType": "off",
+				"noTemplateCurlyInString": "off"
 			},
 			"performance": {
 				"all": true,

@@ -128,7 +128,7 @@ export async function createNewProfile(
 	// Save profile settings
 	const profileSettings: ProfileSettings = {
 		Version: version,
-		LoaderManifest: loaderManifest,
+		...(loaderManifest && { LoaderManifest: loaderManifest }),
 		RAM: ram,
 	};
 	saveIniFile(profileSettings, join(profilePath, 'profile-settings.ini'));
