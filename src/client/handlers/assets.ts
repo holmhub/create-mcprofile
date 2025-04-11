@@ -193,6 +193,7 @@ export function isLegacy(version: IVersionManifest): boolean {
 }
 
 // (async () => {
+//
 // 	client.on('debug', console.log);
 // 	client.on('data', console.log);
 // 	const { handleProgress } = await import('@/utils/progress.ts');
