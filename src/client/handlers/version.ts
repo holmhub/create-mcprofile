@@ -69,7 +69,6 @@ export async function getJar(
 
 		// Prepare file paths
 		const jarFileName = options.version.custom || options.version.number;
-		const jarPath = join(options.directory, `${jarFileName}.jar`);
 		const jsonPath = join(options.directory, `${options.version.number}.json`);
 
 		// Download and save files
@@ -83,13 +82,6 @@ export async function getJar(
 			),
 			writeFile(jsonPath, JSON.stringify(version, null, 2)),
 		]);
-
-		client.emit(
-			'debug',
-			`Successfully processed version files:
-			- JAR: ${jarPath}
-			- JSON: ${jsonPath}`
-		);
 
 		return true;
 	} catch (error) {

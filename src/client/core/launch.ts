@@ -31,15 +31,13 @@ export async function init(options: ILauncherOptions) {
 	const { minorVersion } = parseVersion(versionFile.id);
 	const modifyJson = await getCustomVersionManifest(options);
 	const nativePath = await getNatives(options, versionFile);
-
 	options.version.type = versionFile.type;
 
-	if (!existsSync(options.mcPath || '')) {
-		client.emit('debug', 'Attempting to download Minecraft version jar');
-		await getJar(options, versionFile);
-	}
+	client.emit('debug', 'Attempting to download Minecraft version jar');
+	await getJar(options, versionFile);
 
 	const args: string[] = [];
+	const [Xmx, Xms] = getMemory(options);
 
 	let jvm = [
 		'-XX:-UseAdaptiveSizePolicy',
@@ -47,8 +45,8 @@ export async function init(options: ILauncherOptions) {
 		'-Dfml.ignorePatchDiscrepancies=true',
 		'-Dfml.ignoreInvalidMinecraftCertificates=true',
 		`-Djava.library.path=${nativePath}`,
-		`-Xmx${getMemory(options)[0]}`,
-		`-Xms${getMemory(options)[1]}`,
+		`-Xmx${Xmx}`,
+		`-Xms${Xms}`,
 	];
 
 	// Add OS-specific JVM options (skip for macOS with MC versions <= 1.12)
@@ -93,7 +91,7 @@ export async function init(options: ILauncherOptions) {
 	// So mods like fabric work.
 	const jar = existsSync(options.mcPath || '')
 		? `${separator}${options.mcPath}`
-		: `${separator}${join(options.directory || '', `${options.version.number}.jar`)}`;
+		: `${separator}${join(options.directory, `${options.version.number}.jar`)}`;
 	classPaths.push(
 		`${options.forge ? options.forge + separator : ''}${classes.join(separator)}${jar}`
 	);

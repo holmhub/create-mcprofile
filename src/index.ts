@@ -50,14 +50,6 @@ function startGame({
 	profile: string;
 	ram: string;
 }) {
-	console.log({
-		name,
-		gameDir,
-		profilesDir,
-		version,
-		profile,
-		ram,
-	});
 	const maxRam = Number.parseInt(ram);
 	const minRam = Math.floor(maxRam / 2);
 	const launcher = launch({
@@ -74,13 +66,14 @@ function startGame({
 		overrides: {
 			maxSockets: 4,
 			gameDirectory: join(profilesDir, profile),
+			directory: join(profilesDir, profile),
 		},
 	});
 
 	launcher.on('debug', console.log);
 	launcher.on('data', console.log);
 	launcher.on('progress', handleProgress);
-	const allowedSet = new Set(['java-download']);
+	const allowedSet = new Set(['java-download', 'version-jar']);
 	launcher.on('download-status', (event) => {
 		allowedSet.has(event.type) && handleDownloadStatus(event);
 	});
