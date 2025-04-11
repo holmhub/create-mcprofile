@@ -19,49 +19,13 @@ import { getLaunchOptions } from './arguments.ts';
 import { getJVM, selectJavaPath } from './java.ts';
 import { configureLog4jForVersion } from './prepare.ts';
 
-export function initializeLauncherOptions(
-	options: ILauncherOptions
-): ILauncherOptions {
-	options.root = resolve(options.root);
-
-	options.overrides = {
-		detached: true,
-		...options.overrides,
-		url: {
-			meta: 'https://launchermeta.mojang.com',
-			resource: 'https://resources.download.minecraft.net',
-			mavenForge: 'https://files.minecraftforge.net/maven/',
-			defaultRepoForge: 'https://libraries.minecraft.net/',
-			fallbackMaven: 'https://search.maven.org/remotecontent?filepath=',
-			...(options.overrides?.url || undefined),
-		},
-	};
-
-	options.directory = resolve(
-		options.overrides.directory ||
-			join(
-				options.root,
-				'versions',
-				options.version.custom || options.version.number
-			)
-	);
-
-	options.mcPath =
-		options.overrides.minecraftJar ||
-		join(
-			options.directory,
-			`${options.version.custom || options.version.number}.jar`
-		);
-
-	return options;
-}
-
 export async function init(options: ILauncherOptions) {
 	initializeLauncherOptions(options);
+
+	// Handle root directory and version directory
+	if (!options.directory) throw new Error('No version specified');
 	mkdirSync(options.root, { recursive: true });
-	if (options.directory) {
-		mkdirSync(options.directory, { recursive: true });
-	}
+	mkdirSync(options.directory, { recursive: true });
 
 	const versionFile = await getVersionManifest(options);
 	const { minorVersion } = parseVersion(versionFile.id);
@@ -87,11 +51,8 @@ export async function init(options: ILauncherOptions) {
 		`-Xms${getMemory(options)[1]}`,
 	];
 
-	if (getOS() === 'osx') {
-		if (minorVersion > 12) {
-			jvm.push(getJVM());
-		}
-	} else {
+	// Add OS-specific JVM options (skip for macOS with MC versions <= 1.12)
+	if (getOS() !== 'osx' || minorVersion > 12) {
 		jvm.push(getJVM());
 	}
 
@@ -169,6 +130,43 @@ export async function init(options: ILauncherOptions) {
 	options.javaPath = await selectJavaPath(options);
 
 	return startMinecraft(launchArguments, options);
+}
+
+function initializeLauncherOptions(
+	options: ILauncherOptions
+): ILauncherOptions {
+	options.root = resolve(options.root);
+
+	options.overrides = {
+		detached: true,
+		...options.overrides,
+		url: {
+			meta: 'https://launchermeta.mojang.com',
+			resource: 'https://resources.download.minecraft.net',
+			mavenForge: 'https://files.minecraftforge.net/maven/',
+			defaultRepoForge: 'https://libraries.minecraft.net/',
+			fallbackMaven: 'https://search.maven.org/remotecontent?filepath=',
+			...(options.overrides?.url || undefined),
+		},
+	};
+
+	options.directory = resolve(
+		options.overrides.directory ||
+			join(
+				options.root,
+				'versions',
+				options.version.custom || options.version.number
+			)
+	);
+
+	options.mcPath =
+		options.overrides.minecraftJar ||
+		join(
+			options.directory,
+			`${options.version.custom || options.version.number}.jar`
+		);
+
+	return options;
 }
 
 function startMinecraft(launchArguments: string[], options: ILauncherOptions) {
