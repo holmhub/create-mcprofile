@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.12](https://github.com/holmityd/create-mcprofile/compare/v0.0.11...v0.0.12) (2025-04-12)
+
+
+### Features
+
+* **client:** add checksum validation for downloaded jar files ([c6e8377](https://github.com/holmityd/create-mcprofile/commit/c6e837712554cf1d0a69347fdddf24039d087c7b))
+
 ### [0.0.11](https://github.com/holmityd/create-mcprofile/compare/v0.0.10...v0.0.11) (2025-04-11)
 
 ### [0.0.10](https://github.com/holmityd/create-mcprofile/compare/v0.0.9...v0.0.10) (2025-04-10)
