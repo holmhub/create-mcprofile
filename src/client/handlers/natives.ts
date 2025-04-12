@@ -1,4 +1,3 @@
-import AdmZip from 'adm-zip';
 import { existsSync, mkdirSync, readdirSync, unlinkSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { downloadAsync } from '../core/download.ts';
@@ -8,6 +7,7 @@ import type {
 	ILauncherOptions,
 	IVersionManifest,
 } from '../types.ts';
+import { extract } from '../utils/extract.ts';
 import { getOS, parseRule } from '../utils/system.ts';
 import { parseVersion } from './version.ts';
 
@@ -96,8 +96,7 @@ async function processNative(
 
 	try {
 		await downloadAsync(native.url, nativeDirectory, name, true, 'natives');
-		const zip = new AdmZip(nativePath);
-		zip.extractAllTo(nativeDirectory, true);
+		extract(nativePath, nativeDirectory);
 		unlinkSync(nativePath);
 	} catch (error) {
 		client.emit('debug', `Failed to process native ${name}: ${error}`);

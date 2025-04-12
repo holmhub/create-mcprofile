@@ -2,13 +2,13 @@ import { exec } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
+import { parseVersion } from '../handlers/version.ts';
 import { client } from '../index.ts';
-import { extractSync } from '../utils/adm-zip.ts';
+import type { ILauncherOptions } from '../types.ts';
+import { extract } from '../utils/extract.ts';
 import { getErrorMessage } from '../utils/other.ts';
 import { getOS } from '../utils/system.ts';
 import { downloadAsync } from './download.ts';
-import { parseVersion } from '../handlers/version.ts';
-import type { ILauncherOptions } from '../types.ts';
 
 const JAVA_LTS = 21;
 const JAVA_LEGACY = 6;
@@ -125,7 +125,8 @@ async function installJDK(version: number, dir: string) {
 
 		// Extract JDK
 		client.emit('debug', `Extracting Java ${version}...`);
-		extractSync(downloadPath, javaDir, true, (task, total) => {
+
+		extract(downloadPath, javaDir, (task, total) => {
 			client.emit('progress', {
 				type: 'java-extract ',
 				task: task,

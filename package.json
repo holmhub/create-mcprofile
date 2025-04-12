@@ -1,17 +1,32 @@
 {
   "name": "create-mcprofile",
   "version": "0.0.11",
-  "type": "module",
-  "license": "MIT",
   "author": "holmityd",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/holmityd/create-mcprofile.git"
+  },
+  "module": "src/index.ts",
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@clack/prompts": "^0.10.1",
+    "@types/bun": "^1.2.8"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
   "bin": {
     "create-mcprofile": "index.js"
+  },
+  "bugs": {
+    "url": "https://github.com/holmityd/create-mcprofile/issues"
   },
   "files": [
     "index.js",
     "dist"
   ],
-  "module": "src/index.ts",
+  "homepage": "https://github.com/holmityd/create-mcprofile#readme",
+  "license": "MIT",
   "scripts": {
     "dev": "bun --watch .",
     "build": "rm -rf dist && bun build --target=node --minify --sourcemap=none --outdir=dist ./src/index.ts",
@@ -25,24 +40,5 @@
     "prepublishOnly": "bun run build",
     "release": "npx standard-version && git push --follow-tags origin main && npm publish"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/holmityd/create-mcprofile.git"
-  },
-  "bugs": {
-    "url": "https://github.com/holmityd/create-mcprofile/issues"
-  },
-  "homepage": "https://github.com/holmityd/create-mcprofile#readme",
-  "devDependencies": {
-    "@biomejs/biome": "1.9.4",
-    "@types/adm-zip": "^0.5.7",
-    "@types/bun": "^1.2.8"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  },
-  "dependencies": {
-    "@clack/prompts": "^0.10.1",
-    "adm-zip": "^0.5.16"
-  }
+  "type": "module"
 }

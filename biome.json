@@ -79,6 +79,7 @@
 				"noNamespaceImport": "off",
 				"useBlockStatements": "off",
 				"noDefaultExport": "off",
+				"noParameterAssign": "off",
 				"useConst": "warn",
 				"useAsConstAssertion": "warn"
 			}
