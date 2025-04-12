@@ -1,0 +1,40 @@
+{
+	"name": "create-mcprofile",
+	"version": "0.0.11",
+	"type": "module",
+	"module": "index.ts",
+	"bin": {
+		"create-mcprofile": "index.js"
+	},
+	"files": ["index.js", "dist"],
+	"types": "./dist/index.d.ts",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/holmityd/create-mcprofile.git",
+		"directory": "src"
+	},
+	"bugs": {
+		"url": "https://github.com/holmityd/create-mcprofile/issues"
+	},
+	"homepage": "https://github.com/holmityd/create-mcprofile/#readme",
+	"author": {
+		"name": "holmityd"
+	},
+	"license": "MIT",
+	"keywords": [
+		"unzip",
+		"extract",
+		"zip-extractor",
+		"yauzl",
+		"symlink",
+		"file-extractor",
+		"progress",
+		"secure-unzip",
+		"path-safe"
+	],
+	"scripts": {
+		"build": "rm -rf dist && bun build --target=node --minify --sourcemap=none --outdir=dist ./index.ts",
+		"prepare": "bun run build",
+		"prepublishOnly": "bun run build"
+	}
+}
