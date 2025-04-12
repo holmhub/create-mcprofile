@@ -13,8 +13,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
 		"@clack/prompts": "^0.10.1",
-		"@types/bun": "^1.2.8",
-		"unbuild": "^3.5.0"
+		"@types/bun": "^1.2.8"
 	},
 	"peerDependencies": {
 		"typescript": "^5"
