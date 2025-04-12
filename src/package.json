@@ -7,7 +7,6 @@
 		"create-mcprofile": "index.js"
 	},
 	"files": ["index.js", "dist"],
-	"types": "./dist/index.d.ts",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/holmityd/create-mcprofile.git",
@@ -22,15 +21,15 @@
 	},
 	"license": "MIT",
 	"keywords": [
-		"unzip",
-		"extract",
-		"zip-extractor",
-		"yauzl",
-		"symlink",
-		"file-extractor",
-		"progress",
-		"secure-unzip",
-		"path-safe"
+		"minecraft",
+		"minecraft-profile",
+		"minecraft-version",
+		"minecraft-launcher",
+		"game-launcher",
+		"minecraft-cli",
+		"minecraft-manager",
+		"minecraft-tools",
+		"node-minecraft"
 	],
 	"scripts": {
 		"build": "rm -rf dist && bun build --target=node --minify --sourcemap=none --outdir=dist ./index.ts",
