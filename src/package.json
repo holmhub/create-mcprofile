@@ -41,6 +41,6 @@
 		"prepublishOnly": "bun run build",
 		"prerelease": "cp ../README.md ./README.md",
 		"release": "npx standard-version && git push --follow-tags origin main && npm publish",
-		"postrelease": "rm ./README.md"
+		"postrelease": "rm README.md"
 	}
 }
