@@ -2,6 +2,8 @@
 
 A CLI tool to create and manage Minecraft profiles with different versions and mod loaders.
 
+![Demo](assets/demo.png)
+
 ## Features
 - Easy profile creation with interactive CLI
 - Support for vanilla Minecraft versions
