@@ -1,4 +1,5 @@
 import { withRetry } from './other.ts';
+import { parseXMLString, type XMLNode } from './xmlparser.ts';
 
 /**
  * Fetches and parses JSON data from a given URL
@@ -29,4 +30,27 @@ export function fetchJsonWithRetry<T>(
 	delay = 1000
 ): Promise<T> {
 	return withRetry(() => fetchJson<T>(url), retries, delay);
+}
+
+/**
+ * Fetches and parses XML data from a given URL
+ */
+export async function fetchXml(url: string): Promise<XMLNode> {
+	const response = await fetch(url);
+	if (!response.ok) {
+		throw new Error(`HTTP error! status: ${response.status}`);
+	}
+	const text = await response.text();
+	return parseXMLString(text);
+}
+
+/**
+ * Fetches XML data with automatic retry capability
+ */
+export function fetchXmlWithRetry(
+	url: string,
+	retries = 3,
+	delay = 1000
+): Promise<XMLNode> {
+	return withRetry(() => fetchXml(url), retries, delay);
 }

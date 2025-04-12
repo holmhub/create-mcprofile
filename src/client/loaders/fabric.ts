@@ -15,7 +15,7 @@ export type GameVersion = {
 	stable: boolean;
 };
 
-type FabricConfig = {
+export type FabricConfig = {
 	directory: string;
 	gameVersion?: string;
 	loaderVersion?: string;
