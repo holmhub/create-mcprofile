@@ -256,7 +256,7 @@ export interface IVersionManifest {
 	mainClass: string;
 	libraries: ILibrary[];
 	mavenFiles: ILibrary[];
-	downloads: { client: { url: string } };
+	downloads: { client: { url: string; size: number; sha1: string } };
 	assetIndex: { url: string };
 	logging: {
 		client: {

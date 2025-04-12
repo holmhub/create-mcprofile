@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { downloadAsync } from '../core/download.ts';
+import { customCheckSum, downloadAsync } from '../core/download.ts';
 import { client } from '../index.ts';
 import type {
 	ILauncherOptions,
@@ -69,7 +69,27 @@ export async function getJar(
 
 		// Prepare file paths
 		const jarFileName = options.version.custom || options.version.number;
+		const jarPath = join(options.directory, `${jarFileName}.jar`);
 		const jsonPath = join(options.directory, `${options.version.number}.json`);
+
+		// Check if file exists and validate checksum
+		if (existsSync(jarPath)) {
+			client.emit('debug', `Found existing jar file at ${jarPath}`);
+			const isValid = await customCheckSum(
+				version.downloads.client.sha1,
+				jarPath
+			);
+
+			if (isValid) {
+				client.emit('debug', 'Jar file checksum validation passed');
+				return true;
+			}
+
+			client.emit(
+				'debug',
+				'Jar file checksum validation failed, will download again'
+			);
+		}
 
 		// Download and save files
 		await Promise.all([
