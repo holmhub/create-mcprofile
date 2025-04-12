@@ -127,8 +127,8 @@ async function installJDK(version: number, dir: string) {
 		client.emit('debug', `Extracting Java ${version}...`);
 
 		extract(downloadPath, javaDir, (task, total) => {
-			client.emit('progress', {
-				type: 'java-extract ',
+			client.emit('extract-status', {
+				type: 'java-extract',
 				task: task,
 				total: total,
 			});

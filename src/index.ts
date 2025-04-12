@@ -1,6 +1,10 @@
 import { selectProfile } from '@/cli/profiles.ts';
 import { getLauncherSettings, getProfileSettings } from '@/cli/settings.ts';
-import { handleDownloadStatus, handleProgress } from '@/cli/utils/progress.ts';
+import {
+	handleDownloadStatus,
+	handleExtractStatus,
+	handleProgress,
+} from '@/cli/utils/progress.ts';
 import { getAuth } from '@/client/auth.ts';
 import { launch } from '@/client/index.ts';
 import { cancel, intro, outro } from '@clack/prompts';
@@ -73,8 +77,14 @@ function startGame({
 	launcher.on('debug', console.log);
 	launcher.on('data', console.log);
 	launcher.on('progress', handleProgress);
-	const allowedSet = new Set(['java-download', 'version-jar']);
+
+	const extractStatusSet = new Set(['java-extract']);
+	launcher.on('extract-status', (event) => {
+		extractStatusSet.has(event.type) && handleExtractStatus(event);
+	});
+
+	const downloadStatusSet = new Set(['java-download', 'version-jar']);
 	launcher.on('download-status', (event) => {
-		allowedSet.has(event.type) && handleDownloadStatus(event);
+		downloadStatusSet.has(event.type) && handleDownloadStatus(event);
 	});
 }
