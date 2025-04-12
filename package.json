@@ -7,8 +7,7 @@
 		"start": "bun run src/dist/index.js",
 		"format": "biome check --write",
 		"lint": "biome lint --write --unsafe",
-		"type-check": "biome lint && tsc",
-		"release": "cd src && npx standard-version && git push --follow-tags origin main  && npm publish"
+		"type-check": "biome lint && tsc"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
