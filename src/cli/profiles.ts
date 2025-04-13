@@ -12,24 +12,24 @@ export async function selectProfile(
 	settings: LauncherSettings
 ): Promise<string> {
 	mkdirSync(settings.ProfilesDirectory, { recursive: true });
+
 	const existingProfiles = readdirSync(settings.ProfilesDirectory, {
 		withFileTypes: true,
 	})
 		.filter((dirent) => dirent.isDirectory())
 		.map(({ name }) => ({ value: name, label: name }));
-	let profile: string | undefined = (await select<string>({
-		message: 'Select Minecraft version',
-		options: [
-			...existingProfiles,
-			{ value: 'create', label: 'Create new profile 🌟' },
-		],
-	})) as string;
 
-	// Create new profile if selected
-	if (profile === 'create') {
-		while (profile === 'create' || !profile) {
-			profile = await createNewProfile(settings);
-		}
+	let profile: string | undefined;
+	while (profile === 'create' || !profile) {
+		profile = (await select<string>({
+			message: 'Select Minecraft version',
+			options: [
+				...existingProfiles,
+				{ value: 'create', label: 'Create new profile 🌟' },
+			],
+		})) as string;
+		// Create new profile if selected
+		if (profile === 'create') profile = await createNewProfile(settings);
 	}
 	return profile;
 }
