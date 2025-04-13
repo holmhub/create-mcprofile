@@ -4,6 +4,7 @@ import { join, resolve } from 'node:path';
 import { createNewProfile } from './profiles.ts';
 import type { LauncherSettings, ProfileSettings } from './types.ts';
 import { readIniFile, saveIniFile } from './utils/ini.ts';
+import { readdir } from 'node:fs/promises';
 
 const USERNAME = process.env.USERNAME || 'Player';
 const MC_PATH = join(process.env.APPDATA || '', '.minecraft');
@@ -37,12 +38,14 @@ export async function getLauncherSettings(): Promise<LauncherSettings> {
 	const gameDirectory = (await text({
 		message: 'Enter game directory',
 		placeholder: MC_PATH,
+		autocomplete: autocompleteDirectory,
 	})) as string;
 
 	// Profile directory selection
 	const profilesDirectory = (await text({
 		message: 'Enter profiles directory',
 		placeholder: VERSIONS_PATH,
+		autocomplete: autocompleteDirectory,
 	})) as string;
 
 	const settings: LauncherSettings = {
@@ -71,4 +74,22 @@ export async function getProfileSettings(
 		await createNewProfile(settings, profile);
 	}
 	return readIniFile<ProfileSettings>(profileSettingsPath);
+}
+
+async function autocompleteDirectory(input: string): Promise<string[]> {
+	if (!input) return [];
+	try {
+		const parts = input.split(/[/\\]/);
+		const searchDir = parts.slice(0, -1).join('/') || '.';
+		const searchTerm = parts.at(-1)?.toLowerCase() || '';
+
+		return (await readdir(searchDir, { withFileTypes: true }))
+			.filter(
+				(entry) =>
+					entry.isDirectory() && entry.name.toLowerCase().startsWith(searchTerm)
+			)
+			.map((entry) => join(searchDir, `${entry.name}/`));
+	} catch {
+		return [];
+	}
 }

@@ -33,6 +33,7 @@ export async function getLoader(
 	return (await text({
 		message: 'Select Fabric version',
 		placeholder: filteredVersions[0],
+		autocomplete: filteredVersions,
 		validate(value) {
 			if (!value) return 'Version number is required';
 			if (!filteredVersions.includes(value))
