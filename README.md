@@ -2,7 +2,7 @@
 
 A CLI tool to create and manage Minecraft profiles with different versions and mod loaders.
 
-![Demo](assets/demo.png)
+![Demo](https://raw.githubusercontent.com/holmityd/create-mcprofile/refs/heads/main/assets/demo.png)
 
 ## Features
 - Easy profile creation with interactive CLI
