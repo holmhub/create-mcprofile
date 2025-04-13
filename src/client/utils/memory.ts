@@ -1,4 +1,4 @@
-import { client } from '../index.ts';
+import { client } from '../constants.ts';
 import type { ILauncherOptions } from '../types.ts';
 
 const DEFAULT_MEMORY = {

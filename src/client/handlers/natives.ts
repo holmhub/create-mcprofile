@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readdirSync, unlinkSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { client } from '../constants.ts';
 import { downloadAsync } from '../core/download.ts';
-import { client } from '../index.ts';
 import type {
 	IArtifact,
 	ILauncherOptions,

@@ -1,6 +1,6 @@
 import { join, resolve } from 'node:path';
+import { client } from '../constants.ts';
 import { downloadToDirectory } from '../core/download.ts';
-import { client } from '../index.ts';
 import type { ILauncherOptions, ILibrary, IVersionManifest } from '../types.ts';
 import { getErrorMessage } from '../utils/other.ts';
 import { parseRule } from '../utils/system.ts';

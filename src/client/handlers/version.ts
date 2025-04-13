@@ -1,8 +1,8 @@
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { client } from '../constants.ts';
 import { customCheckSum, downloadAsync } from '../core/download.ts';
-import { client } from '../index.ts';
 import type {
 	ILauncherOptions,
 	IVersionManifest,

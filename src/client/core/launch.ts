@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { client } from '../constants.ts';
 import { getAssets } from '../handlers/assets.ts';
 import { getClasses } from '../handlers/libraries.ts';
 import { getNatives } from '../handlers/natives.ts';
@@ -10,7 +11,6 @@ import {
 	getVersionManifest,
 	parseVersion,
 } from '../handlers/version.ts';
-import { client } from '../index.ts';
 import type { ILauncherOptions } from '../types.ts';
 import { getMemory } from '../utils/memory.ts';
 import { getUniqueNonNullValues } from '../utils/other.ts';

@@ -1,7 +1,7 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { client } from '../constants.ts';
 import { customCheckSum, downloadAsync } from '../core/download.ts';
-import { client } from '../index.ts';
 import type { ILauncherOptions, IVersionManifest } from '../types.ts';
 import { getErrorMessage } from '../utils/other.ts';
 

@@ -1,6 +1,6 @@
 import { join, resolve } from 'node:path';
+import { client } from '../constants.ts';
 import { isLegacy } from '../handlers/assets.ts';
-import { client } from '../index.ts';
 import type {
 	IGameArgument,
 	ILauncherOptions,

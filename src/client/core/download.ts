@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { createWriteStream, existsSync, mkdirSync, unlinkSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join, sep } from 'node:path';
-import { client } from '../index.ts';
+import { client } from '../constants.ts';
 import type { ILibrary } from '../types.ts';
 import { parseRule } from '../utils/system.ts';
 

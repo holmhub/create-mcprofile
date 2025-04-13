@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { client } from '../index.ts';
+import { client } from '../constants.ts';
 import type { ILauncherOptions } from '../types.ts';
 import { downloadAsync } from './download.ts';
 

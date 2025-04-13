@@ -6,7 +6,7 @@ import {
 	handleProgress,
 } from '@/cli/utils/progress.ts';
 import { getAuth } from '@/client/auth.ts';
-import { launch } from '@/client/index.ts';
+import { launch } from '@/client/client.ts';
 import { cancel, intro, outro } from '@clack/prompts';
 import { join } from 'node:path';
 

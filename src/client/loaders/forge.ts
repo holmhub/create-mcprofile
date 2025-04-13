@@ -1,10 +1,10 @@
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { downloadAsync } from '../core/download.ts';
 import { parseVersion } from '../handlers/version.ts';
 import { fetchXmlWithRetry } from '../utils/fetch.ts';
 import type { FabricConfig, GameVersion } from './fabric.ts';
-import { downloadAsync } from '../core/download.ts';
 
 type ForgeLoaderVersion = {
 	version: string;
