@@ -6,11 +6,7 @@
 	"bin": {
 		"create-mcprofile": "index.js"
 	},
-	"files": [
-		"index.js",
-		"dist",
-		"../README.md"
-	],
+	"files": ["index.js", "dist", "../README.md"],
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/holmityd/create-mcprofile.git",

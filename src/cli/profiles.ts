@@ -1,5 +1,5 @@
 import { setupFabric } from '@/client/loaders/fabric';
-import { note, select, spinner, text } from '@clack/prompts';
+import { confirm, note, select, spinner, text } from '@clack/prompts';
 import { existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { getLoader } from './loader.ts';
@@ -85,15 +85,11 @@ export async function createNewProfile(
 	);
 
 	// Confirm profile creation
-	const confirm = await select({
+	const confirmed = await confirm({
 		message: 'Would you like to create this profile?',
-		options: [
-			{ value: true, label: 'Yes' },
-			{ value: false, label: 'No' },
-		],
 	});
 
-	if (!confirm) return;
+	if (!confirmed) return;
 
 	const profilePath = join(settings.ProfilesDirectory, profileName);
 	mkdirSync(profilePath, { recursive: true });
