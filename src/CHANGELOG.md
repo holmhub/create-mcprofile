@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.14](https://github.com/holmityd/create-mcprofile/compare/v0.0.13...v0.0.14) (2025-04-13)
+
+
+### Features
+
+* add XML parsing and Forge loader support ([82449ec](https://github.com/holmityd/create-mcprofile/commit/82449ec2fce7201085fb2a199d52c29b576b5276))
+* **cli:** add autocomplete functionality for directory and version selection ([3bdf86c](https://github.com/holmityd/create-mcprofile/commit/3bdf86c5cef791a24b28dc0e75bac345d2892256))
+
 ### [0.0.13](https://github.com/holmityd/create-mcprofile/compare/v0.0.12...v0.0.13) (2025-04-12)
 
 ### [0.0.12](https://github.com/holmityd/create-mcprofile/compare/v0.0.11...v0.0.12) (2025-04-12)
