@@ -215,8 +215,14 @@ async function extractEntry(
 	outputDir: string,
 	createdDirs?: Set<string>
 ): Promise<void> {
+	// Normalize & verify the path to avoid zip-slip attacks
+	const safeName = entryName.replace(/\\/g, '/'); // Convert backslashes
+	if (safeName.includes('..')) {
+		throw new Error(`Rejected potentially unsafe path: ${safeName}`);
+	}
+
 	// Create output file path
-	const targetPath = join(outputDir, entryName);
+	const targetPath = join(outputDir, safeName);
 
 	// Skip directories
 	if (entryName.endsWith('/')) return;
