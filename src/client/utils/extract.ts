@@ -37,9 +37,21 @@ interface EntryReturnType {
 	 * @param encoding - The character encoding to use (defaults to 'utf-8')
 	 * @returns Promise that resolves with the text content
 	 */
-
-	// biome-ignore lint/correctness/noUndeclaredVariables: <explanation>
-	getText: (encoding?: BufferEncoding) => Promise<string>;
+	getText: (
+		encoding?:
+			| 'ascii'
+			| 'utf8'
+			| 'utf-8'
+			| 'utf16le'
+			| 'utf-16le'
+			| 'ucs2'
+			| 'ucs-2'
+			| 'base64'
+			| 'base64url'
+			| 'latin1'
+			| 'binary'
+			| 'hex'
+	) => Promise<string>;
 
 	/**
 	 * Extracts the zip entry to a file in the specified directory
@@ -132,7 +144,7 @@ export async function extract(
  * @param buffer - The buffer containing the ZIP archive data.
  * @returns A map where each key is an entry name and each value is the corresponding {@link ZipEntry}.
  */
-function getEntries(buffer: Buffer<ArrayBufferLike>): Map<string, ZipEntry> {
+function getEntries(buffer: Buffer): Map<string, ZipEntry> {
 	let offset = 0;
 	const entries: Map<string, ZipEntry> = new Map([]);
 	while (offset < buffer.length) {
