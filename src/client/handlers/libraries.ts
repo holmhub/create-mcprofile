@@ -6,9 +6,11 @@ import { getErrorMessage } from '../utils/other.ts';
 import { parseRule } from '../utils/system.ts';
 
 /**
- * Downloads and collects all required libraries for Minecraft
- * Handles both custom (Forge/Fabric) and vanilla Minecraft libraries
- * @returns Array of paths to downloaded library files
+ * Downloads and collects all required Minecraft libraries for a given version.
+ *
+ * Handles both vanilla and custom (Forge/Fabric) libraries, returning an array of file paths to the downloaded libraries.
+ *
+ * @returns An array of file paths to all downloaded library files.
  */
 export async function getClasses(
 	options: ILauncherOptions,

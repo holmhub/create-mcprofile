@@ -130,6 +130,14 @@ export async function init(options: ILauncherOptions) {
 	return startMinecraft(launchArguments, options);
 }
 
+/**
+ * Normalizes and augments launcher options for Minecraft startup.
+ *
+ * Resolves and sets absolute paths for the root directory, working directory, and Minecraft jar file. Merges default and custom URL overrides. If Forge is specified, appends Forge wrapper JVM arguments to any existing custom arguments.
+ *
+ * @param options - The launcher options to initialize and normalize.
+ * @returns The updated launcher options with resolved paths and merged overrides.
+ */
 function initializeLauncherOptions(
 	options: ILauncherOptions
 ): ILauncherOptions {
