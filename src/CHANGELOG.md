@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.15](https://github.com/holmityd/create-mcprofile/compare/v0.0.14...v0.0.15) (2025-04-16)
+
+
+### Features
+
+* **forge:** add ForgeWrapper integration for modern Forge versions ([256929a](https://github.com/holmityd/create-mcprofile/commit/256929abe8cac9ae1e1cdc13a8a2c91bace9f7d6))
+* **launch:** add DEFAULT_URLS constant and forge wrapper args ([34d0acb](https://github.com/holmityd/create-mcprofile/commit/34d0acb578c09845598a5ed5368ec5b6dbb29438))
+* **types:** add new fields to IVersionManifest and ILibrary interfaces ([72fa5cf](https://github.com/holmityd/create-mcprofile/commit/72fa5cf7645ec97e57d20880ea0725161b7a430c))
+
+
+### Bug Fixes
+
+* **extract:** prevent zip-slip attacks by normalizing and verifying paths ([9f8ce83](https://github.com/holmityd/create-mcprofile/commit/9f8ce83086a92633c2b1a408349a433303a0338c))
+
 ### [0.0.14](https://github.com/holmityd/create-mcprofile/compare/v0.0.13...v0.0.14) (2025-04-13)
 
 
