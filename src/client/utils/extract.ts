@@ -128,15 +128,12 @@ export async function extract(
 		? archiveBuffer
 		: readFileSync(archiveBuffer);
 	const entries = preParsedEntries ?? getEntriesFromCentralDirectory(buffer);
-
-	onProgress(0, entries.size);
-
 	const createdDirs = new Set<string>();
-	let current = 0;
 	const concurrencyLimit = 10;
 	const entryIterator = entries.values();
 	const activePromises: Promise<void>[] = [];
 	let iteratorResult = entryIterator.next();
+	let current = 0;
 
 	// Function to process a single entry
 	const processEntry = async (entry: ZipEntry): Promise<void> => {
@@ -153,6 +150,8 @@ export async function extract(
 			onProgress(current, entries.size);
 		}
 	};
+
+	onProgress(0, entries.size);
 
 	// Loop to manage concurrency
 	while (true) {
