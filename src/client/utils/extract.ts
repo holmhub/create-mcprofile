@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { mkdir, stat, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve, sep } from 'node:path';
 import { inflateRaw } from 'node:zlib';
 import { getErrorMessage } from './other.ts';
 
@@ -261,17 +261,20 @@ async function extractEntry(
 	outputDir: string,
 	createdDirs?: Set<string>
 ): Promise<void> {
-	// Normalize & verify the path to avoid zip-slip attacks
-	const safeName = entryName.replace(/\\/g, '/'); // Convert backslashes
-	if (safeName.includes('..')) {
-		throw new Error(`Rejected potentially unsafe path: ${safeName}`);
-	}
-
-	// Create output file path
-	const targetPath = join(outputDir, safeName);
-
 	// Skip directories
 	if (entryName.endsWith('/')) return;
+
+	// Normalize & verify the path to avoid zip-slip attacks
+	const safeName = entryName.replace(/\\/g, '/');
+	const targetPath = join(outputDir, safeName);
+	const resolvedPath = resolve(targetPath);
+	const resolvedOutputDir = resolve(outputDir);
+	if (
+		resolvedPath !== resolvedOutputDir &&
+		!resolvedPath.startsWith(resolvedOutputDir + sep)
+	) {
+		throw new Error(`Rejected potentially unsafe path: ${safeName}`);
+	}
 
 	// Ensure parent directory exists
 	const parentDir = dirname(targetPath);
