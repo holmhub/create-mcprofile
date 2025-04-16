@@ -67,6 +67,7 @@ const MIN_CDFH_SIZE = 46;
 const EOCD_MIN_SIZE = 22;
 const CENTRAL_DIR_HEADER = 0x02014b50;
 const EOCD_SIGNATURE = 0x06054b50;
+const CONCURRENCY_LIMIT = 10; // Default concurrency limit for extraction
 const STORE = 0;
 const DEFLATE = 8;
 
@@ -112,7 +113,7 @@ export function createZipReader(archivePath: string): ZipReader {
 
 			return {
 				getBuffer: () => getDecompressedPromise(),
-				getText: async (encoding) => {
+				getText: async (encoding = 'utf8') => {
 					const decompressed = await getDecompressedPromise();
 					return decompressed.toString(encoding);
 				},
@@ -147,7 +148,6 @@ export async function extract(
 		: readFileSync(archiveBuffer);
 	const entries = preParsedEntries ?? getEntriesFromCentralDirectory(buffer);
 	const createdDirs = new Set<string>();
-	const concurrencyLimit = 10;
 	const entryIterator = entries.values();
 	const activePromises: Promise<void>[] = [];
 	let iteratorResult = entryIterator.next();
@@ -174,7 +174,7 @@ export async function extract(
 	// Loop to manage concurrency
 	while (true) {
 		// Fill the pool up to the concurrency limit as long as there are entries
-		while (activePromises.length < concurrencyLimit && !iteratorResult.done) {
+		while (activePromises.length < CONCURRENCY_LIMIT && !iteratorResult.done) {
 			const entry = iteratorResult.value;
 			const promise = processEntry(entry).then(() => {
 				// When a promise finishes, remove it from the active pool
@@ -264,9 +264,7 @@ async function extractEntry(
 	// Normalize & verify the path to avoid zip-slip attacks
 	const safeName = entryName.replace(/\\/g, '/'); // Convert backslashes
 	if (safeName.includes('..')) {
-		// Silently skip potentially malicious entries or throw an error
-		console.warn(`Rejected potentially unsafe path: ${safeName}`);
-		return;
+		throw new Error(`Rejected potentially unsafe path: ${safeName}`);
 	}
 
 	// Create output file path
@@ -296,7 +294,7 @@ async function extractEntry(
 			} catch {
 				// If stat fails, the original error is likely the cause
 				throw new Error(
-					`Failed to create directory '${parentDir}': ${getErrorMessage(err)}}`
+					`Failed to create directory '${parentDir}': ${getErrorMessage(err)}`
 				);
 			}
 		}
@@ -457,20 +455,20 @@ export function getEntriesFromCentralDirectory(
 // 	console.log(`${Date.now() - startTime}ms`);
 // })();
 
-(async () => {
-	const startTime = Date.now();
-	// const buffer = await readFile('out/java21.zip');
-	// getEntries(buffer);
-	// await createZipReader('out/java21.zip');
-	// const result = await createZipReader('out/java21.zip')
-	// 	.getEntry('install_profile.json')
-	// 	?.getText();
-	// console.log(JSON.parse(result!).version);
-	const zipper = createZipReader('out/forge-installer.jar');
-	await zipper.getEntry('install_profile.json')?.getText();
-	// await zipper.extractAll('out/forge-installer');
-	console.log(`${Date.now() - startTime}ms`);
-})();
+// (async () => {
+// const startTime = Date.now();
+// const buffer = await readFile('out/java21.zip');
+// getEntries(buffer);
+// await createZipReader('out/java21.zip');
+// const result = await createZipReader('out/java21.zip')
+// 	.getEntry('install_profile.json')
+// 	?.getText();
+// console.log(JSON.parse(result!).version);
+// const zipper = createZipReader('out/forge-installer.jar');
+// await zipper.getEntry('install_profile.json')?.getText();
+// await zipper.extractAll('out/forge-installer');
+// console.log(`${Date.now() - startTime}ms`);
+// })();
 
 // async function extractZip(zipFilePath: string, outputDir: string) {
 // 	try {
