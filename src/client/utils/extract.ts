@@ -96,13 +96,31 @@ export function createZipReader(archivePath: string): ZipReader {
 			const entry = entries.get(entryName);
 			if (!entry) return;
 
-			const decompressPromise = decompressEntry(entry);
+			// Store the entry data, but don't decompress yet
+			const originalEntryData = entry;
+			// Cache for the decompression promise, initialized lazily
+			let decompressedDataPromise: Promise<Buffer> | null = null;
+
+			// Helper function to get or create the decompression promise
+			const getDecompressedPromise = (): Promise<Buffer> => {
+				if (!decompressedDataPromise) {
+					// Decompress only when first needed
+					decompressedDataPromise = decompressEntry(originalEntryData);
+				}
+				return decompressedDataPromise;
+			};
+
 			return {
-				getBuffer: () => decompressPromise,
-				getText: async (encoding) =>
-					(await decompressPromise).toString(encoding),
-				extractTo: async (directory) =>
-					writeFile(join(directory, entryName), await decompressPromise),
+				getBuffer: () => getDecompressedPromise(),
+				getText: async (encoding) => {
+					const decompressed = await getDecompressedPromise();
+					return decompressed.toString(encoding);
+				},
+				extractTo: async (directory) => {
+					const decompressed = await getDecompressedPromise();
+					// Use the original entryName for the path
+					return writeFile(join(directory, originalEntryData[0]), decompressed);
+				},
 			};
 		},
 	};
@@ -448,9 +466,9 @@ export function getEntriesFromCentralDirectory(
 	// 	.getEntry('install_profile.json')
 	// 	?.getText();
 	// console.log(JSON.parse(result!).version);
-	await createZipReader('out/forge-installer.jar').extractAll(
-		'out/forge-installer'
-	);
+	const zipper = createZipReader('out/forge-installer.jar');
+	await zipper.getEntry('install_profile.json')?.getText();
+	// await zipper.extractAll('out/forge-installer');
 	console.log(`${Date.now() - startTime}ms`);
 })();
 
