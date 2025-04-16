@@ -133,16 +133,56 @@ export async function extract(
 
 	const createdDirs = new Set<string>();
 	let current = 0;
-	const filePool: Promise<void>[] = [];
-	for (const entry of entries.values()) {
-		const file = extractEntry(entry, outputDir, createdDirs);
-		file.then(() => {
+	const concurrencyLimit = 10;
+	const entryIterator = entries.values();
+	const activePromises: Promise<void>[] = [];
+	let iteratorResult = entryIterator.next();
+
+	// Function to process a single entry
+	const processEntry = async (entry: ZipEntry): Promise<void> => {
+		try {
+			await extractEntry(entry, outputDir, createdDirs);
+		} catch (err) {
+			// Log error for the specific entry but allow others to continue
+			console.error(
+				`Error extracting entry "${entry[0]}": ${getErrorMessage(err)}`
+			);
+		} finally {
+			// Update progress regardless of success/failure of individual file
 			current++;
 			onProgress(current, entries.size);
-		});
-		filePool.push(file);
+		}
+	};
+
+	// Loop to manage concurrency
+	while (true) {
+		// Fill the pool up to the concurrency limit as long as there are entries
+		while (activePromises.length < concurrencyLimit && !iteratorResult.done) {
+			const entry = iteratorResult.value;
+			const promise = processEntry(entry).then(() => {
+				// When a promise finishes, remove it from the active pool
+				const index = activePromises.indexOf(promise);
+				if (index > -1) {
+					activePromises.splice(index, 1);
+				}
+			});
+			activePromises.push(promise);
+			iteratorResult = entryIterator.next(); // Get the next entry *after* processing the current one
+		}
+
+		// If there are no more entries to queue and the pool is empty, we're done
+		if (iteratorResult.done && activePromises.length === 0) {
+			break; // Exit the main loop
+		}
+
+		// Wait for at least one promise in the pool to settle
+		// Use try/catch around race in case it itself throws (unlikely but safe)
+		try {
+			await Promise.race(activePromises);
+		} catch (raceError) {
+			console.error('Error during Promise.race:', raceError);
+		}
 	}
-	await Promise.all(filePool);
 }
 
 /**
