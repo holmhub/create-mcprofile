@@ -1,4 +1,5 @@
 import { setupFabric } from '@/client/loaders/fabric';
+import { setupForge } from '@/client/loaders/forge.ts';
 import { confirm, note, select, spinner, text } from '@clack/prompts';
 import { existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -43,8 +44,8 @@ export async function createNewProfile(
 		message: 'Select loader',
 		options: [
 			{ value: 'vanilla', label: 'Vanilla' },
+			{ value: 'forge', label: 'Forge' },
 			{ value: 'fabric', label: 'Fabric' },
-			// { value: 'forge', label: 'Forge' },
 			// { value: 'quilt', label: 'Quilt' },
 		],
 	})) as LoaderType;
@@ -52,7 +53,11 @@ export async function createNewProfile(
 	const version = await selectMinecraftVersion(settings, loader);
 
 	// Mod loader selection
-	const loaderVersion = await getLoader(loader);
+	const loaderVersion = await getLoader(
+		loader,
+		version,
+		settings.GameDirectory
+	);
 
 	// RAM allocation function defined below
 	const ram = await selectRAMAllocation();
@@ -103,6 +108,15 @@ export async function createNewProfile(
 			loaderVersion,
 		});
 		s.stop('Fabric downloaded successfully! ✨');
+	} else if (loader === 'forge') {
+		const s = spinner();
+		s.start('Downloading Forge...');
+		loaderManifest = await setupForge({
+			directory: profilePath,
+			gameVersion: version,
+			loaderVersion,
+		});
+		s.stop('Forge downloaded successfully! ✨');
 	}
 
 	// Save profile settings

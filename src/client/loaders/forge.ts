@@ -38,7 +38,7 @@ async function getMavenMetadata(root: string): Promise<ForgeLoaderVersion[]> {
 	return data;
 }
 
-export async function getForgeAvailableVersions(
+export async function getForgeGameVersions(
 	root: string
 ): Promise<GameVersion[]> {
 	const data = await getMavenMetadata(root);
@@ -63,7 +63,7 @@ export async function getForgeAvailableVersions(
 		.map((version) => ({ version, stable: true }));
 }
 
-export async function getForgeVersions(root: string, mcVersion: string) {
+export async function getForgeLoaderVersions(root: string, mcVersion: string) {
 	const versions = await getMavenMetadata(root);
 	return versions
 		.filter(({ version }) => version === mcVersion)

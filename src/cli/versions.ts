@@ -1,11 +1,12 @@
+import { getVersionsManifest } from '@/client/handlers/version.ts';
+import {
+	getFabricGameVersions,
+	type GameVersion,
+} from '@/client/loaders/fabric.ts';
+import { getForgeGameVersions } from '@/client/loaders/forge.ts';
 import { note, select, text } from '@clack/prompts';
 import type { LauncherSettings, LoaderType } from './types.ts';
 import { formatInColumns } from './utils/format.ts';
-import {
-	getFabricVersions,
-	type GameVersion,
-} from '@/client/loaders/fabric.ts';
-import { getVersionsManifest } from '@/client/handlers/version.ts';
 
 export async function selectMinecraftVersion(
 	settings: LauncherSettings,
@@ -83,10 +84,18 @@ async function getVersions(
 	loader: LoaderType,
 	versionType: 'release' | 'all' = 'release'
 ): Promise<string[]> {
-	const versions =
-		loader === 'fabric'
-			? await getFabricVersions()
-			: await getVanillaVersions(settings.GameDirectory);
+	let versions: GameVersion[];
+
+	switch (loader) {
+		case 'fabric':
+			versions = await getFabricGameVersions();
+			break;
+		case 'forge':
+			versions = await getForgeGameVersions(settings.GameDirectory);
+			break;
+		default:
+			versions = await getVanillaVersions(settings.GameDirectory);
+	}
 
 	return versions
 		.filter((v) => v.stable === (versionType === 'release'))

@@ -1,43 +1,56 @@
 import type { LoaderType } from '@/cli/types.ts';
 import { formatInColumns } from '@/cli/utils/format.ts';
-import { getFabricAvailableVersions } from '@/client/loaders/fabric.ts';
+import { getFabricLoaderVersions } from '@/client/loaders/fabric.ts';
+import { getForgeLoaderVersions } from '@/client/loaders/forge.ts';
 import { confirm, note, text } from '@clack/prompts';
 
 export async function getLoader(
-	loaderType: LoaderType
+	loaderType: LoaderType,
+	mcVersion: string,
+	root: string
 ): Promise<string | undefined> {
-	if (loaderType !== 'fabric') return;
+	if (loaderType === 'vanilla') return;
 
-	const fabricVersions = await getFabricAvailableVersions();
-	const filteredVersions = fabricVersions.map((v) => v.version);
-
+	const loaderName = loaderType.charAt(0).toUpperCase() + loaderType.slice(1);
+	const versions = await getLoaderVersions(loaderType, root, mcVersion);
 	const latestVersion = await confirm({
-		message: 'Use recommended Fabric loader version?',
-		initialValue: true,
-		active: 'Yes',
-		inactive: 'No',
+		message: `Use recommended ${loaderName} loader version?`,
 	});
 
 	if (latestVersion) {
-		return filteredVersions[0];
+		return versions[0];
 	}
 
 	note(
-		formatInColumns(filteredVersions, {
+		formatInColumns(versions, {
 			columns: 5,
-			header: '📦 Available Fabric Versions:',
+			header: `📦 Available ${loaderName} Versions:`,
 			padding: 15,
 		})
 	);
 
 	return (await text({
-		message: 'Select Fabric version',
-		placeholder: filteredVersions[0],
-		autocomplete: filteredVersions,
+		message: `Select ${loaderName} version`,
+		placeholder: versions[0],
+		autocomplete: versions,
 		validate(value) {
 			if (!value) return 'Version number is required';
-			if (!filteredVersions.includes(value))
-				return 'Version not found in manifest';
+			if (!versions.includes(value)) return 'Version not found in manifest';
 		},
 	})) as string;
+}
+
+async function getLoaderVersions(
+	type: LoaderType,
+	root: string,
+	mcVersion: string
+) {
+	switch (type) {
+		case 'fabric':
+			return (await getFabricLoaderVersions()).map((v) => v.version);
+		case 'forge':
+			return getForgeLoaderVersions(root, mcVersion);
+		default:
+			return [];
+	}
 }

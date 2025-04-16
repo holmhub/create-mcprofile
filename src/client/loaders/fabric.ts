@@ -23,17 +23,17 @@ export type FabricConfig = {
 
 const FABRIC_API = 'https://meta.fabricmc.net/v2';
 
-export function getFabricAvailableVersions(): Promise<FabricLoaderVersion[]> {
+export function getFabricLoaderVersions(): Promise<FabricLoaderVersion[]> {
 	return fetchJsonWithRetry(`${FABRIC_API}/versions/loader`);
 }
 
-export function getFabricVersions(): Promise<GameVersion[]> {
+export function getFabricGameVersions(): Promise<GameVersion[]> {
 	return fetchJsonWithRetry(`${FABRIC_API}/versions/game`);
 }
 
 export async function setupFabric(config: FabricConfig): Promise<string> {
 	if (!config.loaderVersion) {
-		const [latest] = await getFabricAvailableVersions();
+		const [latest] = await getFabricLoaderVersions();
 		config.loaderVersion = latest?.version;
 	}
 
