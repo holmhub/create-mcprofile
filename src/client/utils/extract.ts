@@ -1,5 +1,5 @@
-import { mkdirSync, readFileSync } from 'node:fs';
-import { writeFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { inflateRaw } from 'node:zlib';
 
@@ -279,7 +279,7 @@ async function extractEntry(
 	// Ensure parent directory exists
 	const parentDir = dirname(targetPath);
 	if (!createdDirs?.has(parentDir)) {
-		mkdirSync(parentDir, { recursive: true });
+		await mkdir(parentDir, { recursive: true });
 		createdDirs?.add(parentDir);
 	}
 
