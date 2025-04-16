@@ -126,7 +126,7 @@ async function installJDK(version: number, dir: string) {
 		// Extract JDK
 		client.emit('debug', `Extracting Java ${version}...`);
 
-		extract(downloadPath, javaDir, (task, total) => {
+		await extract(downloadPath, javaDir, (task, total) => {
 			client.emit('extract-status', {
 				type: 'java-extract',
 				task: task,
@@ -156,27 +156,21 @@ async function installJDK(version: number, dir: string) {
 	}
 }
 
-// (async () => {
-// 	client.on('debug', console.log);
-// 	client.on('data', console.log);
-// 	const { handleProgress, handleDownloadStatus } = await import(
-// 		'@/utils/progress.ts'
-// 	);
-// 	client.on('progress', handleProgress);
-// 	client.on('download-status', handleDownloadStatus);
-// 	const { rmSync } = require('node:fs');
-// 	try {
-// 		rmSync('out/runtime/java-21', {
-// 			recursive: true,
-// 			force: true,
-// 		});
-// 	} catch {}
-// 	const minorVersion = 14;
-// 	let java = 'java';
-// 	const version = await checkJava(java);
-// 	if ((!version || version > 8) && minorVersion < 7)
-// 		java = await setupJava8('out');
-// 	else if (!version) java = await setupJava21('out');
-// 	if (java) await checkJava(java);
-// 	console.log(await getAzulUrl(21));
-// })();
+(async () => {
+	client.on('debug', console.log);
+	client.on('data', console.log);
+	const { handleProgress, handleDownloadStatus } = await import(
+		'@/cli/utils/progress.ts'
+	);
+	client.on('progress', handleProgress);
+	client.on('download-status', handleDownloadStatus);
+	// 	const { rmSync } = require('node:fs');
+	// 	try {
+	// 		rmSync('out/runtime/java-21', {
+	// 			recursive: true,
+	// 			force: true,
+	// 		});
+	// 	} catch {}
+	await installJDK(21, 'out');
+	console.log('done');
+})();
