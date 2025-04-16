@@ -1,7 +1,7 @@
 import { getVersionsManifest } from '@/client/handlers/version.ts';
 import {
-	getFabricGameVersions,
 	type GameVersion,
+	getFabricGameVersions,
 } from '@/client/loaders/fabric.ts';
 import { getForgeGameVersions } from '@/client/loaders/forge.ts';
 import { note, select, text } from '@clack/prompts';

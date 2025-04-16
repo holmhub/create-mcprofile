@@ -14,7 +14,7 @@
 		"indentStyle": "tab"
 	},
 	"organizeImports": {
-		"enabled": false
+		"enabled": true
 	},
 	"linter": {
 		"enabled": true,
@@ -34,9 +34,7 @@
 				"noUnusedImports": "error",
 				"noPrecisionLoss": "error",
 				"noVoidTypeReturn": "error",
-				"noNodejsModules": "off",
-				"noUndeclaredDependencies": "off",
-				"useHookAtTopLevel": "warn"
+				"noNodejsModules": "off"
 			},
 			"nursery": {
 				"all": true,

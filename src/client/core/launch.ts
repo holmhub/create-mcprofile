@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { client, DEFAULT_URLS } from '../constants.ts';
+import { DEFAULT_URLS, client } from '../constants.ts';
 import { getAssets } from '../handlers/assets.ts';
 import { getClasses } from '../handlers/libraries.ts';
 import { getNatives } from '../handlers/natives.ts';

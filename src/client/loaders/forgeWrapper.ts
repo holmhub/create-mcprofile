@@ -1,10 +1,10 @@
-import { DEFAULT_URLS } from '@/client/constants';
-import { parseVersion } from '@/client/handlers/version';
-import type { IVersionManifest } from '@/client/types';
-import { createZipReader } from '@/client/utils/extract';
-import { getUniqueNonNullValues } from '@/client/utils/other';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { DEFAULT_URLS } from '@/client/constants.ts';
+import { parseVersion } from '@/client/handlers/version.ts';
+import type { IVersionManifest } from '@/client/types.ts';
+import { createZipReader } from '@/client/utils/extract.ts';
+import { getUniqueNonNullValues } from '@/client/utils/other.ts';
 
 const FORGE_WRAPPER = {
 	baseUrl: 'https://github.com/ZekerZhayard/ForgeWrapper/releases/download/',

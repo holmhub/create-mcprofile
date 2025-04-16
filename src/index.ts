@@ -1,3 +1,4 @@
+import { join, resolve } from 'node:path';
 import { selectProfile } from '@/cli/profiles.ts';
 import { getLauncherSettings, getProfileSettings } from '@/cli/settings.ts';
 import {
@@ -8,7 +9,6 @@ import {
 import { getAuth } from '@/client/auth.ts';
 import { launch } from '@/client/client.ts';
 import { cancel, intro, outro } from '@clack/prompts';
-import { join, resolve } from 'node:path';
 
 main().catch((err) => {
 	cancel(`An error occurred: ${err.message}`);

@@ -1,8 +1,8 @@
+import { existsSync, mkdirSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { setupFabric } from '@/client/loaders/fabric';
 import { setupForge } from '@/client/loaders/forge.ts';
 import { confirm, note, select, spinner, text } from '@clack/prompts';
-import { existsSync, mkdirSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
 import { getLoader } from './loader.ts';
 import { selectRAMAllocation } from './ram.ts';
 import type { LauncherSettings, LoaderType, ProfileSettings } from './types.ts';

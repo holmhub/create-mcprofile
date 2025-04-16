@@ -1,10 +1,10 @@
-import { note, spinner, text } from '@clack/prompts';
 import { existsSync } from 'node:fs';
+import { readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
+import { note, spinner, text } from '@clack/prompts';
 import { createNewProfile } from './profiles.ts';
 import type { LauncherSettings, ProfileSettings } from './types.ts';
 import { readIniFile, saveIniFile } from './utils/ini.ts';
-import { readdir } from 'node:fs/promises';
 
 const USERNAME = process.env.USERNAME || 'Player';
 const MC_PATH = join(process.env.APPDATA || '', '.minecraft');
