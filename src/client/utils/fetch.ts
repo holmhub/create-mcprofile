@@ -1,5 +1,5 @@
 import { withRetry } from './other.ts';
-import { parseXMLString, type XMLNode } from './xmlparser.ts';
+import { type XMLNode, parseXMLString } from './xmlparser.ts';
 
 /**
  * Fetches and parses JSON data from a given URL

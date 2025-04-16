@@ -20,18 +20,19 @@ export async function getClasses(
 	);
 
 	try {
-		const customLibs = await downloadCustomLibraries(
-			classJson,
-			libraryDirectory
-		);
 		const vanillaLibs = await downloadVanillaLibraries(
 			classJson,
 			libraryDirectory,
 			version
 		);
 
+		const customLibs = await downloadCustomLibraries(
+			classJson,
+			libraryDirectory
+		);
+
 		client.emit('debug', 'Collected class paths');
-		return [...customLibs, ...vanillaLibs];
+		return [...vanillaLibs, ...customLibs];
 	} catch (error) {
 		client.emit('debug', `Failed to download libraries: ${error}`);
 		return [];

@@ -1,6 +1,6 @@
-import { getErrorMessage } from '@/client/utils/other';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { getErrorMessage } from '@/client/utils/other';
 
 export function iniParse<T>(iniString: string): T {
 	// biome-ignore lint/suspicious/noExplicitAny: <explanation>

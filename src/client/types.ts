@@ -255,9 +255,11 @@ export interface IVersionManifest {
 	minimumLauncherVersion: number;
 	mainClass: string;
 	libraries: ILibrary[];
+	inheritsFrom: string;
 	mavenFiles: ILibrary[];
 	downloads: { client: { url: string; size: number; sha1: string } };
 	assetIndex: { url: string };
+	forgeWrapperVersion?: string;
 	logging: {
 		client: {
 			argument: string;
@@ -286,9 +288,11 @@ export interface ILibrary {
 			[key: string]: IArtifact;
 		};
 	};
-	url: string;
+	url?: string;
 	name: string;
 	rules?: IRule[];
+	serverreq?: string;
+	clientreq?: string;
 }
 
 export interface IRule {
@@ -332,3 +336,14 @@ export interface Version {
 }
 
 export type VersionType = 'release' | 'snapshot';
+
+export type GameVersion = {
+	version: string;
+	stable: boolean;
+};
+
+export type LoaderConfig = {
+	directory: string;
+	gameVersion?: string;
+	loaderVersion?: string;
+};

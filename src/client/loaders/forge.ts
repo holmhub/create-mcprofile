@@ -1,10 +1,11 @@
-import { existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { downloadAsync } from '../core/download.ts';
 import { parseVersion } from '../handlers/version.ts';
+import type { GameVersion, LoaderConfig } from '../types.ts';
 import { fetchXmlWithRetry } from '../utils/fetch.ts';
-import type { FabricConfig, GameVersion } from './fabric.ts';
+import { getForgedWrapped } from './forgeWrapper.ts';
 
 type ForgeLoaderVersion = {
 	version: string;
@@ -37,7 +38,7 @@ async function getMavenMetadata(root: string): Promise<ForgeLoaderVersion[]> {
 	return data;
 }
 
-export async function getForgeAvailableVersions(
+export async function getForgeGameVersions(
 	root: string
 ): Promise<GameVersion[]> {
 	const data = await getMavenMetadata(root);
@@ -62,7 +63,7 @@ export async function getForgeAvailableVersions(
 		.map((version) => ({ version, stable: true }));
 }
 
-export async function getForgeVersions(root: string, mcVersion: string) {
+export async function getForgeLoaderVersions(root: string, mcVersion: string) {
 	const versions = await getMavenMetadata(root);
 	return versions
 		.filter(({ version }) => version === mcVersion)
@@ -83,33 +84,46 @@ function getDownloadLink(loaderVersion: string) {
 	return `${baseUrl}/${loaderVersion}/forge-${loaderVersion}-${type}.jar`;
 }
 
-export async function setupFabric(config: FabricConfig): Promise<string> {
+export async function setupForge(config: LoaderConfig): Promise<string> {
 	if (!(config.loaderVersion && config.gameVersion)) {
 		throw new Error('Missing version configuration');
 	}
 
-	const versionPath = join(config.directory, 'forge.jar');
+	const profileName = `forge-${config.gameVersion}-${config.loaderVersion}`;
+	const profilePath = join(config.directory, `${profileName}.json`);
+
 	const versionUrl = getDownloadLink(
 		`${config.gameVersion}-${config.loaderVersion}`
 	);
 
+	const profileInstallerName = `${profileName}-installer.jar`;
 	await downloadAsync(
 		versionUrl,
 		config.directory,
-		'forge.jar',
+		profileInstallerName,
 		true,
 		'forge-jar'
 	);
 
-	return versionPath;
+	const profile = await getForgedWrapped(config.directory, profileName);
+
+	mkdirSync(dirname(profilePath), { recursive: true });
+	writeFileSync(profilePath, JSON.stringify(profile, null, 2));
+
+	return profileName;
 }
 
-(async () => {
-	const mcvers = await getForgeAvailableVersions('out');
-	const mcver = mcvers[0]!.version;
-	const forgevers = await getForgeVersions('out', mcver);
-	const forgever = forgevers[0]!;
-	console.log(getDownloadLink(`${mcver}-${forgever}`));
-	mkdirSync('out', { recursive: true });
-	await writeFile(join('out', 'forge.json'), JSON.stringify(forgever, null, 2));
-})();
+// (async () => {
+// 	await setupForge({
+// 		directory: 'E:/Users/Nicat/AppData/Roaming/ModrinthApp/profiles/1.20.1',
+// 		gameVersion: '1.20.1',
+// 		loaderVersion: '47.4.0',
+// 	});
+// 	// const mcvers = await getForgeAvailableVersions('out');
+// 	// const mcver = mcvers[0]!.version;
+// 	// const forgevers = await getForgeVersions('out', mcver);
+// 	// const forgever = forgevers[0]!;
+// 	// console.log(getDownloadLink(`${mcver}-${forgever}`));
+// 	// mkdirSync('out', { recursive: true });
+// 	// await writeFile(join('out', 'forge.json'), JSON.stringify(forgever, null, 2));
+// })();

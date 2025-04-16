@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { client } from '../constants.ts';
+import { DEFAULT_URLS, client } from '../constants.ts';
 import { getAssets } from '../handlers/assets.ts';
 import { getClasses } from '../handlers/libraries.ts';
 import { getNatives } from '../handlers/natives.ts';
@@ -139,11 +139,7 @@ function initializeLauncherOptions(
 		detached: true,
 		...options.overrides,
 		url: {
-			meta: 'https://launchermeta.mojang.com',
-			resource: 'https://resources.download.minecraft.net',
-			mavenForge: 'https://files.minecraftforge.net/maven/',
-			defaultRepoForge: 'https://libraries.minecraft.net/',
-			fallbackMaven: 'https://search.maven.org/remotecontent?filepath=',
+			...DEFAULT_URLS,
 			...(options.overrides?.url || undefined),
 		},
 	};
@@ -163,6 +159,18 @@ function initializeLauncherOptions(
 			options.directory,
 			`${options.version.custom || options.version.number}.jar`
 		);
+
+	if (options.forge) {
+		const forgeWrapperAgrs = [
+			`-Dforgewrapper.librariesDir=${resolve(options.overrides.libraryRoot || join(options.root, 'libraries'))}`,
+			`-Dforgewrapper.installer=${options.forge}`,
+			`-Dforgewrapper.minecraft=${options.mcPath}`,
+		];
+
+		options.customArgs = options.customArgs
+			? options.customArgs.concat(forgeWrapperAgrs)
+			: forgeWrapperAgrs;
+	}
 
 	return options;
 }
