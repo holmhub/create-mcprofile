@@ -76,20 +76,24 @@ export async function getProfileSettings(
 	return readIniFile<ProfileSettings>(profileSettingsPath);
 }
 
-async function autocompleteDirectory(input: string): Promise<string[]> {
-	if (!input) return [];
+async function autocompleteDirectory(
+	input: string
+): Promise<string | undefined> {
+	if (!input) return;
 	try {
-		const parts = input.split(/[/\\]/);
-		const searchDir = parts.slice(0, -1).join('/') || '.';
-		const searchTerm = parts.at(-1)?.toLowerCase() || '';
+		const pathParts = input.split(/[/\\]/);
+		const directoryPath = pathParts.slice(0, -1).join('/') || '.';
+		const searchTerm = pathParts.at(-1)?.toLowerCase() || '';
 
-		return (await readdir(searchDir, { withFileTypes: true }))
-			.filter(
-				(entry) =>
-					entry.isDirectory() && entry.name.toLowerCase().startsWith(searchTerm)
-			)
-			.map((entry) => join(searchDir, `${entry.name}/`));
+		const dirEntries = await readdir(directoryPath, { withFileTypes: true });
+		const matchingDirectory = dirEntries.find(
+			(entry) =>
+				entry.isDirectory() && entry.name.toLowerCase().startsWith(searchTerm)
+		);
+
+		if (!matchingDirectory) return;
+		return join(directoryPath, `${matchingDirectory.name}/`);
 	} catch {
-		return [];
+		return;
 	}
 }
