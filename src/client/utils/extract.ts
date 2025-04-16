@@ -9,7 +9,8 @@ type ZipEntry = [
 	compressionType: number,
 	rawDataPos: [start: number, end: number],
 ];
-type ZipProgressCallback = (bytesProcessed: number, totalBytes: number) => void;
+
+type ZipProgressCallback = (filesProcessed: number, totalFiles: number) => void;
 
 type BufferEncoding =
 	| 'ascii'
@@ -96,7 +97,7 @@ export function createZipReader(archivePath: string): ZipReader {
 
 	return {
 		extractAll: (directory, onProgress = () => {}) =>
-			extract(buffer, directory, entries, onProgress),
+			extractAll(buffer, entries, directory, onProgress),
 		getEntry: (entryName) => {
 			const entry = entries.get(entryName);
 			if (!entry) return;
@@ -134,17 +135,17 @@ export function createZipReader(archivePath: string): ZipReader {
 /**
  * Extracts all files from a ZIP or JAR archive to a specified directory.
  *
- * @param archiveBuffer - Buffer containing the ZIP or JAR archive data.
+ * @param buffer - Buffer containing the ZIP or JAR archive data.
+ * @param entries - Map of entries parsed from the central directory.
  * @param outputDir - Directory where files will be extracted.
  * @param onProgress - Optional callback invoked with the number of files extracted and the total number of entries.
- * @param preParsedEntries - Optional map of entries already parsed from the central directory.
  *
  * @returns A promise that resolves when extraction is complete.
  */
-async function extract(
+async function extractAll(
 	buffer: Buffer,
-	outputDir: string,
 	entries: Map<string, ZipEntry>,
+	outputDir: string,
 	onProgress: ZipProgressCallback = () => {}
 ): Promise<void> {
 	const createdDirs = new Set<string>();
@@ -204,9 +205,10 @@ async function extract(
 }
 
 /**
- * Decompresses a ZIP entry buffer using the specified compression method.
+ * Decompresses a ZIP entry using the specified compression method.
  *
- * @param entry - The ZIP entry tuple containing the compression type and raw data.
+ * @param buffer - The full ZIP archive buffer.
+ * @param entry - The ZIP entry tuple containing entry name, compression type, and position data.
  * @returns A promise that resolves to the decompressed buffer.
  *
  * @throws {Error} If the compression method is unsupported.
@@ -251,6 +253,8 @@ function decompressEntry(
  *
  * Skips extraction if the entry represents a directory. Ensures the parent directory exists before writing the decompressed file.
  *
+ * @param buffer - The full ZIP archive buffer.
+ * @param entry - The ZIP entry tuple containing entry name, compression type, and position data.
  * @param outputDir - The directory where the entry will be extracted.
  * @param createdDirs - An optional set used to track and avoid redundant directory creation.
  *
