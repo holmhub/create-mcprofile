@@ -8,7 +8,7 @@ import {
 import { getAuth } from '@/client/auth.ts';
 import { launch } from '@/client/client.ts';
 import { cancel, intro, outro } from '@clack/prompts';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 
 main().catch((err) => {
 	cancel(`An error occurred: ${err.message}`);
@@ -63,6 +63,13 @@ function startGame({
 			number: version,
 			custom: loaderManifest,
 		},
+		...(loaderManifest?.startsWith('forge')
+			? {
+					forge: resolve(
+						join(profilesDir, profile, `${loaderManifest}-installer.jar`)
+					),
+				}
+			: {}),
 		memory: {
 			max: `${maxRam}G`,
 			min: `${minRam}G`,
