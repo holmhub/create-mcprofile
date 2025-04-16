@@ -3,8 +3,8 @@ import { writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { downloadAsync } from '../core/download.ts';
 import { parseVersion } from '../handlers/version.ts';
+import type { GameVersion, LoaderConfig } from '../types.ts';
 import { fetchXmlWithRetry } from '../utils/fetch.ts';
-import type { FabricConfig, GameVersion } from './fabric.ts';
 import { getForgedWrapped } from './forgeWrapper.ts';
 
 type ForgeLoaderVersion = {
@@ -125,7 +125,7 @@ function getDownloadLink(loaderVersion: string) {
  *
  * @throws {Error} If either {@link config.loaderVersion} or {@link config.gameVersion} is missing.
  */
-export async function setupForge(config: FabricConfig): Promise<string> {
+export async function setupForge(config: LoaderConfig): Promise<string> {
 	if (!(config.loaderVersion && config.gameVersion)) {
 		throw new Error('Missing version configuration');
 	}

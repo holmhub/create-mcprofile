@@ -336,3 +336,14 @@ export interface Version {
 }
 
 export type VersionType = 'release' | 'snapshot';
+
+export type GameVersion = {
+	version: string;
+	stable: boolean;
+};
+
+export type LoaderConfig = {
+	directory: string;
+	gameVersion?: string;
+	loaderVersion?: string;
+};

@@ -1,9 +1,7 @@
 import { getVersionsManifest } from '@/client/handlers/version.ts';
-import {
-	type GameVersion,
-	getFabricGameVersions,
-} from '@/client/loaders/fabric.ts';
+import { getFabricGameVersions } from '@/client/loaders/fabric.ts';
 import { getForgeGameVersions } from '@/client/loaders/forge.ts';
+import type { GameVersion } from '@/client/types.ts';
 import { note, select, text } from '@clack/prompts';
 import type { LauncherSettings, LoaderType } from './types.ts';
 import { formatInColumns } from './utils/format.ts';
