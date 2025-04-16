@@ -1,6 +1,6 @@
 import type { LoaderType } from '@/cli/types.ts';
 import { formatInColumns } from '@/cli/utils/format.ts';
-import { getAvailableVersions } from '@/client/loaders/fabric';
+import { getFabricAvailableVersions } from '@/client/loaders/fabric.ts';
 import { confirm, note, text } from '@clack/prompts';
 
 export async function getLoader(
@@ -8,7 +8,7 @@ export async function getLoader(
 ): Promise<string | undefined> {
 	if (loaderType !== 'fabric') return;
 
-	const fabricVersions = await getAvailableVersions();
+	const fabricVersions = await getFabricAvailableVersions();
 	const filteredVersions = fabricVersions.map((v) => v.version);
 
 	const latestVersion = await confirm({
