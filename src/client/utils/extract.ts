@@ -4,7 +4,11 @@ import { dirname, join, resolve, sep } from 'node:path';
 import { inflateRaw } from 'node:zlib';
 import { getErrorMessage } from './other.ts';
 
-type ZipEntry = [entryName: string, compressionType: number, rawData: Buffer];
+type ZipEntry = [
+	entryName: string,
+	compressionType: number,
+	rawDataPos: [start: number, end: number],
+];
 type ZipProgressCallback = (bytesProcessed: number, totalBytes: number) => void;
 
 type BufferEncoding =
@@ -92,7 +96,7 @@ export function createZipReader(archivePath: string): ZipReader {
 
 	return {
 		extractAll: (directory, onProgress = () => {}) =>
-			extract(buffer, directory, onProgress, entries),
+			extract(buffer, directory, entries, onProgress),
 		getEntry: (entryName) => {
 			const entry = entries.get(entryName);
 			if (!entry) return;
@@ -106,7 +110,7 @@ export function createZipReader(archivePath: string): ZipReader {
 			const getDecompressedPromise = (): Promise<Buffer> => {
 				if (!decompressedDataPromise) {
 					// Decompress only when first needed
-					decompressedDataPromise = decompressEntry(originalEntryData);
+					decompressedDataPromise = decompressEntry(buffer, originalEntryData);
 				}
 				return decompressedDataPromise;
 			};
@@ -137,16 +141,12 @@ export function createZipReader(archivePath: string): ZipReader {
  *
  * @returns A promise that resolves when extraction is complete.
  */
-export async function extract(
-	archiveBuffer: Buffer | string,
+async function extract(
+	buffer: Buffer,
 	outputDir: string,
-	onProgress: ZipProgressCallback = () => {},
-	preParsedEntries?: Map<string, ZipEntry>
+	entries: Map<string, ZipEntry>,
+	onProgress: ZipProgressCallback = () => {}
 ): Promise<void> {
-	const buffer = Buffer.isBuffer(archiveBuffer)
-		? archiveBuffer
-		: readFileSync(archiveBuffer);
-	const entries = preParsedEntries ?? getEntriesFromCentralDirectory(buffer);
 	const createdDirs = new Set<string>();
 	const entryIterator = entries.values();
 	const activePromises: Promise<void>[] = [];
@@ -156,7 +156,7 @@ export async function extract(
 	// Function to process a single entry
 	const processEntry = async (entry: ZipEntry): Promise<void> => {
 		try {
-			await extractEntry(entry, outputDir, createdDirs);
+			await extractEntry(buffer, entry, outputDir, createdDirs);
 		} catch (err) {
 			// Log error for the specific entry but allow others to continue
 			console.error(
@@ -212,11 +212,11 @@ export async function extract(
  * @throws {Error} If the compression method is unsupported.
  * @throws {Error} If decompression fails or results in an empty buffer.
  */
-function decompressEntry([
-	,
-	compressionType,
-	rawData,
-]: ZipEntry): Promise<Buffer> {
+function decompressEntry(
+	buffer: Buffer,
+	[, compressionType, [start, end]]: ZipEntry
+): Promise<Buffer> {
+	const rawData = buffer.subarray(start, end);
 	switch (compressionType) {
 		case STORE:
 			// Ensure rawData is not empty for STORE entries if size was 0
@@ -257,7 +257,8 @@ function decompressEntry([
  * @returns A promise that resolves when the entry has been extracted.
  */
 async function extractEntry(
-	[entryName, compressionType, rawData]: ZipEntry,
+	buffer: Buffer,
+	[entryName, compressionType, rawDataPos]: ZipEntry,
 	outputDir: string,
 	createdDirs?: Set<string>
 ): Promise<void> {
@@ -265,7 +266,11 @@ async function extractEntry(
 	if (entryName.endsWith('/')) return;
 
 	// Normalize & verify the path to avoid zip-slip attacks
-	const safeName = entryName.replace(/\\/g, '/');
+	const safeName = entryName
+		.replace(/\\/g, '/') // Convert backslashes to forward slashes
+		.replace(/^(\.\.(\/|$))+/, '') // Remove leading "../" sequences
+		.replace(/^\/+/, '') // Remove leading slashes
+		.replace(/^[A-Za-z]:(\/|\\)/, ''); // Remove drive letters
 	const targetPath = join(outputDir, safeName);
 	const resolvedPath = resolve(targetPath);
 	const resolvedOutputDir = resolve(outputDir);
@@ -304,10 +309,10 @@ async function extractEntry(
 	}
 
 	// Decompress data (handles STORE and DEFLATE)
-	const decompressedData = await decompressEntry([
+	const decompressedData = await decompressEntry(buffer, [
 		entryName,
 		compressionType,
-		rawData,
+		rawDataPos,
 	]);
 
 	// Write the file
@@ -431,11 +436,12 @@ export function getEntriesFromCentralDirectory(
 			continue;
 		}
 
-		// Extract raw compressed data
-		const rawData = buffer.subarray(dataStartOffset, dataEndOffset);
-
 		// Store the entry using the same ZipEntry structure
-		entries.set(entryName, [entryName, compressionType, rawData]);
+		entries.set(entryName, [
+			entryName,
+			compressionType,
+			[dataStartOffset, dataEndOffset],
+		]);
 
 		// Move to the next CDFH entry
 		currentOffset = fileCommentEnd;
@@ -458,20 +464,13 @@ export function getEntriesFromCentralDirectory(
 // 	console.log(`${Date.now() - startTime}ms`);
 // })();
 
-// (async () => {
-// const startTime = Date.now();
-// const buffer = await readFile('out/java21.zip');
-// getEntries(buffer);
-// await createZipReader('out/java21.zip');
-// const result = await createZipReader('out/java21.zip')
-// 	.getEntry('install_profile.json')
-// 	?.getText();
-// console.log(JSON.parse(result!).version);
-// const zipper = createZipReader('out/forge-installer.jar');
-// await zipper.getEntry('install_profile.json')?.getText();
-// await zipper.extractAll('out/forge-installer');
-// console.log(`${Date.now() - startTime}ms`);
-// })();
+(async () => {
+	const startTime = Date.now();
+	const zipper = createZipReader('out/forge-installer.jar');
+	await zipper.getEntry('install_profile.json')?.getText();
+	await zipper.extractAll('out/forge-installer');
+	console.log(`${Date.now() - startTime}ms`);
+})();
 
 // async function extractZip(zipFilePath: string, outputDir: string) {
 // 	try {
