@@ -176,11 +176,12 @@ export async function extract(
 		}
 
 		// Wait for at least one promise in the pool to settle
-		// Use try/catch around race in case it itself throws (unlikely but safe)
-		try {
+		// If race rejects, the error will propagate out of 'extract' automatically
+		if (activePromises.length > 0) {
 			await Promise.race(activePromises);
-		} catch (raceError) {
-			console.error('Error during Promise.race:', raceError);
+		} else if (iteratorResult.done) {
+			// Should have already broken the loop, but double-check
+			break;
 		}
 	}
 }
