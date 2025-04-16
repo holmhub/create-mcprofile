@@ -56,20 +56,18 @@ const STORE = 0;
 const DEFLATE = 8;
 
 /**
- * Creates a ZIP/JAR archive reader with methods to extract and read entries
- * @param archivePath - Path to the ZIP/JAR file to read
- * @returns ZipReader interface for accessing and extracting archive contents
- * @example
- * const zip = createZipReader('path/to/archive.zip');
+ * Creates a ZIP or JAR archive reader that provides methods to extract all files or access individual entries.
  *
- * // Extract single file
+ * @param archivePath - Path to the ZIP or JAR file.
+ * @returns An object with methods to extract all files, retrieve a specific entry, read entry contents as a buffer or text, and extract individual entries.
+ *
+ * @example
+ * const zip = createZipReader('archive.zip');
  * const entry = zip.getEntry('file.txt');
  * if (entry) {
  *   const text = await entry.getText();
  *   await entry.extractTo('output/dir');
  * }
- *
- * // Extract all files
  * await zip.extractAll('output/dir');
  */
 export function createZipReader(archivePath: string): ZipReader {
@@ -95,10 +93,13 @@ export function createZipReader(archivePath: string): ZipReader {
 }
 
 /**
- * Simple archive extractor using only built-in Node.js modules
- * @param archivePath - Path to the ZIP/JAR file
- * @param outputDir - Directory to extract files to
- * @param onProgress - Progress callback
+ * Extracts all files from a ZIP or JAR archive to a specified directory.
+ *
+ * @param archivePath - Path to the ZIP or JAR archive file.
+ * @param outputDir - Directory where files will be extracted.
+ * @param onProgress - Optional callback invoked with the number of files extracted and the total number of entries.
+ *
+ * @returns A promise that resolves when extraction is complete.
  */
 export async function extract(
 	archivePath: string,
@@ -123,6 +124,14 @@ export async function extract(
 	await Promise.all(filePool);
 }
 
+/**
+ * Parses a ZIP archive buffer and returns a map of entry names to their corresponding ZIP entry data.
+ *
+ * Iterates through the buffer, extracting each file entry until the central directory header is encountered or the buffer ends.
+ *
+ * @param buffer - The buffer containing the ZIP archive data.
+ * @returns A map where each key is an entry name and each value is the corresponding {@link ZipEntry}.
+ */
 function getEntries(buffer: Buffer<ArrayBufferLike>): Map<string, ZipEntry> {
 	let offset = 0;
 	const entries: Map<string, ZipEntry> = new Map([]);
@@ -136,6 +145,15 @@ function getEntries(buffer: Buffer<ArrayBufferLike>): Map<string, ZipEntry> {
 	return entries;
 }
 
+/**
+ * Parses a ZIP entry from the buffer at the given offset.
+ *
+ * @param buffer - The buffer containing ZIP archive data.
+ * @param offset - The offset in the buffer to start parsing from.
+ * @returns A tuple containing the parsed {@link ZipEntry} and the offset of the next entry, or `[null, nextOffset]` if no valid entry is found.
+ *
+ * @remark Returns `[null, buffer.length]` if a central directory header is encountered, indicating the end of entries.
+ */
 function parseEntry(buffer: Buffer, offset: number): [ZipEntry | null, number] {
 	const signature = buffer.readUInt32LE(offset);
 	if (signature === CENTRAL_DIR_HEADER) {
@@ -179,6 +197,15 @@ function parseEntry(buffer: Buffer, offset: number): [ZipEntry | null, number] {
 	return [null, dataEnd];
 }
 
+/**
+ * Decompresses a ZIP entry buffer using the specified compression method.
+ *
+ * @param entry - The ZIP entry tuple containing the compression type and raw data.
+ * @returns A promise that resolves to the decompressed buffer.
+ *
+ * @throws {Error} If the compression method is unsupported.
+ * @throws {Error} If decompression fails or results in an empty buffer.
+ */
 function decompressEntry([
 	,
 	compressionType,
@@ -210,6 +237,16 @@ function decompressEntry([
 	}
 }
 
+/**
+ * Extracts a single ZIP entry to the specified output directory.
+ *
+ * Skips extraction if the entry represents a directory. Ensures the parent directory exists before writing the decompressed file.
+ *
+ * @param outputDir - The directory where the entry will be extracted.
+ * @param createdDirs - An optional set used to track and avoid redundant directory creation.
+ *
+ * @returns A promise that resolves when the entry has been extracted.
+ */
 async function extractEntry(
 	[entryName, compressionType, rawData]: ZipEntry,
 	outputDir: string,
@@ -243,6 +280,13 @@ async function extractEntry(
 	return writeFile(targetPath, decompressedData);
 }
 
+/**
+ * Finds the offset of the next local file header in a ZIP archive buffer.
+ *
+ * @param buffer - The ZIP archive buffer to search.
+ * @param startOffset - The position in the buffer to start searching from.
+ * @returns The offset of the next local file header, or the buffer length if none is found.
+ */
 function findNextEntry(buffer: Buffer, startOffset: number): number {
 	for (let i = startOffset; i < buffer.length - 4; i++) {
 		if (buffer.readUInt32LE(i) === ZIP_HEADER) {

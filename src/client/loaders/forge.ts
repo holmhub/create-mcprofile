@@ -12,6 +12,14 @@ type ForgeLoaderVersion = {
 	forge: string;
 };
 
+/**
+ * Retrieves and caches Forge loader version metadata from the Maven repository.
+ *
+ * Checks for a cached JSON file in the specified root directory. If not present, fetches the metadata from the Forge Maven repository, parses available version entries, filters out invalid data, and caches the result for future use.
+ *
+ * @param root - The root directory where the cache should be stored.
+ * @returns An array of objects containing Minecraft and Forge loader version pairs.
+ */
 async function getMavenMetadata(root: string): Promise<ForgeLoaderVersion[]> {
 	const cacheDir = join(root, 'cache');
 	const cachePath = join(cacheDir, 'forge-versions.json');
@@ -38,6 +46,14 @@ async function getMavenMetadata(root: string): Promise<ForgeLoaderVersion[]> {
 	return data;
 }
 
+/**
+ * Returns a sorted list of unique Minecraft game versions available for Forge.
+ *
+ * The versions are sorted in descending order by major, minor, and patch numbers, and each entry is marked as stable.
+ *
+ * @param root - The root directory used for caching Forge metadata.
+ * @returns An array of game version objects with `version` and `stable` properties.
+ */
 export async function getForgeGameVersions(
 	root: string
 ): Promise<GameVersion[]> {
@@ -63,6 +79,13 @@ export async function getForgeGameVersions(
 		.map((version) => ({ version, stable: true }));
 }
 
+/**
+ * Retrieves all Forge loader versions available for a specific Minecraft version.
+ *
+ * @param root - The root directory used for caching Forge metadata.
+ * @param mcVersion - The Minecraft version to filter Forge loader versions by.
+ * @returns An array of Forge loader version strings for the specified Minecraft version.
+ */
 export async function getForgeLoaderVersions(root: string, mcVersion: string) {
 	const versions = await getMavenMetadata(root);
 	return versions
@@ -70,6 +93,14 @@ export async function getForgeLoaderVersions(root: string, mcVersion: string) {
 		.map((version) => version.forge);
 }
 
+/**
+ * Generates the download URL for a Forge installer or universal jar based on the loader version.
+ *
+ * Selects the "universal" jar for legacy versions (Minecraft 1.12 and below, except 1.12.2 builds above 2847), otherwise uses the "installer" jar.
+ *
+ * @param loaderVersion - The Forge loader version string in the format "MCVERSION-FORGEVERSION".
+ * @returns The direct URL to the appropriate Forge jar file for the specified loader version.
+ */
 function getDownloadLink(loaderVersion: string) {
 	const [mcVersion] = loaderVersion.split('-');
 	const [, minor = '0'] = mcVersion?.split('.') || [''];
@@ -84,6 +115,16 @@ function getDownloadLink(loaderVersion: string) {
 	return `${baseUrl}/${loaderVersion}/forge-${loaderVersion}-${type}.jar`;
 }
 
+/**
+ * Sets up a Forge profile by downloading the appropriate installer and generating a profile JSON.
+ *
+ * Downloads the Forge installer jar for the specified Minecraft and Forge loader versions, generates a profile JSON using the installer, and saves it to the given directory. Returns the generated profile name.
+ *
+ * @param config - Configuration object containing the target directory, Minecraft game version, and Forge loader version.
+ * @returns The name of the created Forge profile.
+ *
+ * @throws {Error} If either {@link config.loaderVersion} or {@link config.gameVersion} is missing.
+ */
 export async function setupForge(config: LoaderConfig): Promise<string> {
 	if (!(config.loaderVersion && config.gameVersion)) {
 		throw new Error('Missing version configuration');

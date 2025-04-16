@@ -6,6 +6,13 @@ import { note, select, text } from '@clack/prompts';
 import type { LauncherSettings, LoaderType } from './types.ts';
 import { formatInColumns } from './utils/format.ts';
 
+/**
+ * Prompts the user to select a Minecraft version to install, offering common releases and an option for custom selection.
+ *
+ * If "Other" is chosen, allows the user to specify any available version.
+ *
+ * @returns The selected Minecraft version string.
+ */
 export async function selectMinecraftVersion(
 	settings: LauncherSettings,
 	loader?: LoaderType
@@ -77,6 +84,12 @@ export async function selectCustomVersion(
 	return version;
 }
 
+/**
+ * Retrieves a list of available Minecraft version strings for the specified loader and version type.
+ *
+ * @param versionType - Determines whether to include only stable releases ("release") or all versions ("all").
+ * @returns An array of version strings matching the loader and version type.
+ */
 async function getVersions(
 	settings: LauncherSettings,
 	loader: LoaderType,
