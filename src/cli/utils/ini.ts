@@ -2,6 +2,14 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { getErrorMessage } from '@/client/utils/other';
 
+/**
+ * Parses an INI-formatted string into a typed object.
+ *
+ * Ignores empty lines and comment lines starting with `;` or `#`. Section headers in square brackets create nested objects. Key-value pairs are parsed at the root or within sections. Values are automatically converted to boolean, integer, array (comma-separated), or string types as appropriate.
+ *
+ * @param iniString - The INI-formatted string to parse.
+ * @returns The parsed configuration object.
+ */
 export function iniParse<T>(iniString: string): T {
 	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 	const result: any = {};

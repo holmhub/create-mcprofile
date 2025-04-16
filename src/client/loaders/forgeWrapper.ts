@@ -13,6 +13,14 @@ const FORGE_WRAPPER = {
 	size: 28679,
 };
 
+/**
+ * Determines whether the given Forge manifest corresponds to a modern Forge version.
+ *
+ * Modern Forge versions are defined as those for Minecraft 1.12 and above, excluding the legacy Forge 1.12.2-14.23.2847 release.
+ *
+ * @param json - The Forge version manifest to evaluate.
+ * @returns `true` if the manifest is for a modern Forge version; otherwise, `false`.
+ */
 function isModernForge(json: IVersionManifest) {
 	if (!json.inheritsFrom) return false;
 
@@ -27,7 +35,12 @@ function isModernForge(json: IVersionManifest) {
 	return (minorVersion ?? 0) >= 12 && !isLegacyForge;
 }
 
-// Helper function to check and load existing version JSON
+/**
+ * Loads an existing version manifest from disk if it exists and matches the current ForgeWrapper version.
+ *
+ * @param versionPath - Path to the version manifest JSON file.
+ * @returns The parsed {@link IVersionManifest} if present and up-to-date; otherwise, `undefined`.
+ */
 function loadExistingVersion(
 	versionPath: string
 ): IVersionManifest | undefined {
@@ -49,7 +62,12 @@ function loadExistingVersion(
 	return;
 }
 
-// Helper function to extract and parse JSON from zip
+/**
+ * Extracts and parses the `version.json` and `install_profile.json` files from a Forge installer zip archive.
+ *
+ * @param zipFile - Path to the Forge installer zip file.
+ * @returns An object containing the parsed `version` and `install_profile` JSON objects, or `undefined` if extraction fails.
+ */
 async function extractForgeJson(zipFile: string) {
 	try {
 		const archive = createZipReader(zipFile);
@@ -69,7 +87,14 @@ async function extractForgeJson(zipFile: string) {
 	}
 }
 
-// If forge is modern and above 1.12.2, we add ForgeWrapper to the libraries so MCLC includes it in the classpaths.
+/**
+ * Modifies a Forge version manifest for modern Forge versions (Minecraft 1.12+ except legacy 1.12.2) to integrate ForgeWrapper.
+ *
+ * Adds ForgeWrapper as a library dependency, sets the main class to the ForgeWrapper installer, and updates the Forge library's download URL for compatibility. For legacy 1.12.2, removes the Forge library entry from the manifest.
+ *
+ * @param json - The version manifest to modify.
+ * @returns The jar ending string, either "launcher" for modern Forge or "universal" for legacy 1.12.2.
+ */
 function handleModernForge(json: IVersionManifest) {
 	let jarEnding = 'universal';
 	if (json.inheritsFrom !== '1.12.2') {
@@ -120,7 +145,14 @@ function handleModernForge(json: IVersionManifest) {
 	return jarEnding;
 }
 
-// Modifying legacy library format to play nice with MCLC's downloadToDirectory function.
+/**
+ * Updates library URLs in a legacy Forge version manifest to ensure compatibility with standard Maven repositories.
+ *
+ * For each non-Forge library, sets the URL to the default Forge Maven repository or a fallback if unavailable.
+ * Skips Forge libraries and libraries lacking required fields.
+ *
+ * @returns The string "universal" to indicate the jar ending for legacy Forge versions.
+ */
 async function handleLegacyForge(json: IVersionManifest) {
 	await Promise.all(
 		json.libraries.map(async (library) => {
@@ -154,6 +186,15 @@ async function handleLegacyForge(json: IVersionManifest) {
 	return 'universal';
 }
 
+/**
+ * Generates or retrieves a Forge-wrapped Minecraft version manifest with ForgeWrapper integration.
+ *
+ * If a cached manifest exists in the specified directory, it is returned. Otherwise, the function extracts and processes the Forge installer JAR to produce a manifest compatible with ForgeWrapper, handling both modern and legacy Forge versions. The resulting manifest is saved for future reuse.
+ *
+ * @param directory - Directory where the version manifest and installer JAR are located.
+ * @param name - Base name of the version and installer files (without extension).
+ * @returns The processed version manifest with ForgeWrapper integration.
+ */
 export async function getForgedWrapped(
 	directory: string,
 	name: string

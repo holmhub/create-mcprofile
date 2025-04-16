@@ -35,6 +35,14 @@ export async function selectProfile(
 	return profile;
 }
 
+/**
+ * Guides the user through creating a new Minecraft launcher profile with a selected mod loader, version, and RAM allocation.
+ *
+ * Prompts the user to choose a loader type (Vanilla, Forge, or Fabric), select a compatible Minecraft version, specify RAM allocation, and provide a unique profile name. For Fabric and Forge loaders, downloads and sets up the appropriate loader in the new profile directory. Saves the profile configuration to an INI file and returns the profile name if creation is successful.
+ *
+ * @param declaredName - Optional profile name to use without prompting the user.
+ * @returns The name of the newly created profile, or `undefined` if the creation is canceled.
+ */
 export async function createNewProfile(
 	settings: LauncherSettings,
 	declaredName?: string

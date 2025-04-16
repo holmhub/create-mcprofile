@@ -37,6 +37,22 @@ async function main() {
 	});
 }
 
+/**
+ * Launches Minecraft with the specified profile, version, and memory settings.
+ *
+ * If a Forge loader manifest is provided and starts with "forge", the function configures the launcher to use the corresponding Forge installer JAR from the profile directory.
+ *
+ * @param name - The launcher or user profile name.
+ * @param gameDir - The root directory for the Minecraft installation.
+ * @param profilesDir - The directory containing user profiles.
+ * @param version - The Minecraft version to launch.
+ * @param loaderManifest - Optional loader manifest identifier (e.g., Forge version).
+ * @param profile - The selected profile name.
+ * @param ram - The maximum RAM allocation for the game, in gigabytes.
+ *
+ * @remark
+ * Sets up event listeners to handle debug, data, progress, extraction, and download status updates during the launch process.
+ */
 function startGame({
 	name,
 	gameDir,
