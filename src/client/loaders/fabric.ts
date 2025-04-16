@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import type { GameVersion, LoaderConfig } from '../types.ts';
 import { fetchJsonWithRetry } from '../utils/fetch.ts';
 
 type FabricLoaderVersion = {
@@ -8,17 +9,6 @@ type FabricLoaderVersion = {
 	separator: string;
 	build: number;
 	maven: string;
-};
-
-export type GameVersion = {
-	version: string;
-	stable: boolean;
-};
-
-export type FabricConfig = {
-	directory: string;
-	gameVersion?: string;
-	loaderVersion?: string;
 };
 
 const FABRIC_API = 'https://meta.fabricmc.net/v2';
@@ -31,7 +21,7 @@ export function getFabricGameVersions(): Promise<GameVersion[]> {
 	return fetchJsonWithRetry(`${FABRIC_API}/versions/game`);
 }
 
-export async function setupFabric(config: FabricConfig): Promise<string> {
+export async function setupFabric(config: LoaderConfig): Promise<string> {
 	if (!config.loaderVersion) {
 		const [latest] = await getFabricLoaderVersions();
 		config.loaderVersion = latest?.version;
