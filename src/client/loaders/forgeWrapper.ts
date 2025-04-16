@@ -21,7 +21,7 @@ const FORGE_WRAPPER = {
  * @param json - The Forge version manifest to evaluate.
  * @returns `true` if the manifest is for a modern Forge version; otherwise, `false`.
  */
-function isModernForge(json: IVersionManifest) {
+export function isModernForge(json: IVersionManifest) {
 	if (!json.inheritsFrom) return false;
 
 	const { minorVersion } = parseVersion(json.inheritsFrom);

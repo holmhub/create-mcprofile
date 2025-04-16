@@ -11,6 +11,7 @@ import {
 	getVersionManifest,
 	parseVersion,
 } from '../handlers/version.ts';
+import { isModernForge } from '../loaders/forgeWrapper.ts';
 import type { ILauncherOptions } from '../types.ts';
 import { getMemory } from '../utils/memory.ts';
 import { getUniqueNonNullValues } from '../utils/other.ts';
@@ -32,6 +33,11 @@ export async function init(options: ILauncherOptions) {
 	const modifyJson = await getCustomVersionManifest(options);
 	const nativePath = await getNatives(options, versionFile);
 	options.version.type = versionFile.type;
+
+	if (options.forge && modifyJson && isModernForge(modifyJson)) {
+		addForgeWrapperArguments(options);
+		options.forge = undefined;
+	}
 
 	client.emit('debug', 'Attempting to download Minecraft version jar');
 	await getJar(options, versionFile);
@@ -169,18 +175,21 @@ function initializeLauncherOptions(
 		);
 
 	if (options.forge) {
-		const forgeWrapperAgrs = [
-			`-Dforgewrapper.librariesDir=${resolve(options.overrides.libraryRoot || join(options.root, 'libraries'))}`,
-			`-Dforgewrapper.installer=${options.forge}`,
-			`-Dforgewrapper.minecraft=${options.mcPath}`,
-		];
-
-		options.customArgs = options.customArgs
-			? options.customArgs.concat(forgeWrapperAgrs)
-			: forgeWrapperAgrs;
 	}
 
 	return options;
+}
+
+function addForgeWrapperArguments(options: ILauncherOptions) {
+	const forgeWrapperAgrs = [
+		`-Dforgewrapper.librariesDir=${resolve(options.overrides?.libraryRoot || join(options.root, 'libraries'))}`,
+		`-Dforgewrapper.installer=${options.forge}`,
+		`-Dforgewrapper.minecraft=${options.mcPath}`,
+	];
+
+	options.customArgs = options.customArgs
+		? options.customArgs.concat(forgeWrapperAgrs)
+		: forgeWrapperAgrs;
 }
 
 function startMinecraft(launchArguments: string[], options: ILauncherOptions) {
