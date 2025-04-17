@@ -7,7 +7,7 @@ import type {
 	ILauncherOptions,
 	IVersionManifest,
 } from '../types.ts';
-import { extract } from '../utils/extract.ts';
+import { createZipReader } from '../utils/extract.ts';
 import { getOS, parseRule } from '../utils/system.ts';
 import { parseVersion } from './version.ts';
 
@@ -96,7 +96,7 @@ async function processNative(
 
 	try {
 		await downloadAsync(native.url, nativeDirectory, name, true, 'natives');
-		extract(nativePath, nativeDirectory);
+		await createZipReader(nativePath).extractAll(nativeDirectory);
 		unlinkSync(nativePath);
 	} catch (error) {
 		client.emit('debug', `Failed to process native ${name}: ${error}`);
