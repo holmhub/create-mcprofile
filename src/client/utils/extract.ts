@@ -163,6 +163,11 @@ async function extractAll(
 	let iteratorResult = entryIterator.next();
 	let current = 0;
 
+	// Defensive: guarantee progress even with bad input
+	if (concurrencyLimit < 1 || !Number.isFinite(concurrencyLimit)) {
+		concurrencyLimit = 1;
+	}
+
 	// Function to process a single entry
 	const processEntry = async (entry: ZipEntry): Promise<void> => {
 		try {
@@ -185,9 +190,7 @@ async function extractAll(
 	while (true) {
 		// Fill the pool up to the concurrency limit as long as there are entries
 		while (activePromises.length < concurrencyLimit && !iteratorResult.done) {
-			// <-- Use the parameter here
-			const entry = iteratorResult.value;
-			const promise = processEntry(entry).then(() => {
+			const promise = processEntry(iteratorResult.value).then(() => {
 				// When a promise finishes, remove it from the active pool
 				const index = activePromises.indexOf(promise);
 				if (index > -1) {
@@ -195,7 +198,7 @@ async function extractAll(
 				}
 			});
 			activePromises.push(promise);
-			iteratorResult = entryIterator.next(); // Get the next entry *after* processing the current one
+			iteratorResult = entryIterator.next();
 		}
 
 		// If there are no more entries to queue and the pool is empty, we're done
@@ -231,8 +234,7 @@ function decompressEntry(
 	const rawData = buffer.subarray(start, end);
 	switch (compressionType) {
 		case STORE:
-			// Ensure rawData is not empty for STORE entries if size was 0
-			return Promise.resolve(rawData ?? Buffer.alloc(0));
+			return Promise.resolve(rawData);
 
 		case DEFLATE: {
 			// Handle potentially zero-byte compressed data for DEFLATE (e.g., empty file)
