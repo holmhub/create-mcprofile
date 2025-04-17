@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.16](https://github.com/holmityd/create-mcprofile/compare/v0.0.15...v0.0.16) (2025-04-17)
+
+
+### Bug Fixes
+
+* **extract:** ensure valid concurrency limit and simplify entry processing ([c9267d9](https://github.com/holmityd/create-mcprofile/commit/c9267d9cc8825c027790fe0120105121b8986116))
+* **extract:** prevent zip-slip attacks by resolving and validating paths ([8b6df1b](https://github.com/holmityd/create-mcprofile/commit/8b6df1b49e86bf70974388d7108c926939d96cd5))
+
 ### [0.0.15](https://github.com/holmityd/create-mcprofile/compare/v0.0.14...v0.0.15) (2025-04-16)
 
 

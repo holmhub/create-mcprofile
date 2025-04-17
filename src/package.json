@@ -1,12 +1,16 @@
 {
 	"name": "create-mcprofile",
-	"version": "0.0.15",
+	"version": "0.0.16",
 	"type": "module",
 	"module": "index.ts",
 	"bin": {
 		"create-mcprofile": "index.js"
 	},
-	"files": ["index.js", "dist", "../README.md"],
+	"files": [
+		"index.js",
+		"dist",
+		"../README.md"
+	],
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/holmityd/create-mcprofile.git",
