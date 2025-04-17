@@ -1,2 +1,2 @@
 @echo off
-bun run ../dist/index.js
+bun run ../src/dist/index.js
