@@ -42,13 +42,19 @@ async function analyzeMap(mapPath: string): Promise<void> {
 		);
 
 		sourceSizes.sort((a, b) => b.size - a.size);
-		const srcTotalSize = sourceSizes
-			.filter((info) => info.path.startsWith(`src${sep}`))
-			.reduce((sum, info) => sum + info.size, 0);
 
-		const nodeModulesTotalSize = sourceSizes
-			.filter((info) => info.path.startsWith(`node_modules${sep}`))
-			.reduce((sum, info) => sum + info.size, 0);
+		// --- Identify top-level directories and calculate totals ---
+		const directoryTotals: Record<string, number> = {};
+		const topLevelDirs = new Set<string>();
+		for (const info of sourceSizes) {
+			const firstSeparatorIndex = info.path.indexOf(sep);
+			let dirName = '[root]';
+			if (firstSeparatorIndex !== -1) {
+				dirName = info.path.substring(0, firstSeparatorIndex);
+			}
+			topLevelDirs.add(dirName);
+			directoryTotals[dirName] = (directoryTotals[dirName] || 0) + info.size;
+		}
 
 		console.log('Original Source File Sizes (Approximation):');
 		console.log('-------------------------------------------');
@@ -59,16 +65,15 @@ async function analyzeMap(mapPath: string): Promise<void> {
 		}
 
 		console.log('-------------------------------------------');
-		console.log(
-			`Total size of src files: ${(srcTotalSize / 1024)
-				.toFixed(2)
-				.padStart(7)} KB`
-		);
-		console.log(
-			`Total size of node_modules files: ${(nodeModulesTotalSize / 1024)
-				.toFixed(2)
-				.padStart(7)} KB`
-		);
+		console.log('Totals by Top-Level Directory:');
+		console.log('-------------------------------------------');
+		const sortedDirs = Array.from(topLevelDirs).sort();
+		for (const dirName of sortedDirs) {
+			const totalSize = directoryTotals[dirName] || 0;
+			console.log(
+				`${(totalSize / 1024).toFixed(2).padStart(7)} KB - ${dirName}${sep}`
+			);
+		}
 	} catch (error: unknown) {
 		if (error instanceof Error) {
 			console.error(`Error analyzing source map: ${error.message}`);
