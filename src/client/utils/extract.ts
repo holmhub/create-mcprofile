@@ -30,11 +30,14 @@ interface ZipReader {
 	/**
 	 * Extracts all files from the archive to the specified directory
 	 * @param directory - The target directory where all files will be extracted
+	 * @param onProgress - Optional callback for progress updates
+	 * @param concurrencyLimit - Optional limit for simultaneous extractions (defaults to 10)
 	 * @returns Promise that resolves when all files have been extracted
 	 */
 	extractAll: (
 		directory: string,
-		onProgress?: ZipProgressCallback
+		onProgress?: ZipProgressCallback,
+		concurrencyLimit?: number // <-- Add optional parameter here
 	) => Promise<void>;
 
 	/**
@@ -72,7 +75,7 @@ const MIN_CDFH_SIZE = 46;
 const EOCD_MIN_SIZE = 22;
 const CENTRAL_DIR_HEADER = 0x02014b50;
 const EOCD_SIGNATURE = 0x06054b50;
-const CONCURRENCY_LIMIT = 10; // Default concurrency limit for extraction
+const DEFAULT_CONCURRENCY = 10;
 const STORE = 0;
 const DEFLATE = 8;
 
@@ -96,8 +99,12 @@ export function createZipReader(archivePath: string): ZipReader {
 	const entries = getEntriesFromCentralDirectory(buffer);
 
 	return {
-		extractAll: (directory, onProgress = () => {}) =>
-			extractAll(buffer, entries, directory, onProgress),
+		// Pass the concurrency limit through, using a default if not provided
+		extractAll: (
+			directory,
+			onProgress = () => {},
+			concurrencyLimit = DEFAULT_CONCURRENCY
+		) => extractAll(buffer, entries, directory, onProgress, concurrencyLimit), // <-- Pass it here
 		getEntry: (entryName) => {
 			const entry = entries.get(entryName);
 			if (!entry) return;
@@ -139,6 +146,7 @@ export function createZipReader(archivePath: string): ZipReader {
  * @param entries - Map of entries parsed from the central directory.
  * @param outputDir - Directory where files will be extracted.
  * @param onProgress - Optional callback invoked with the number of files extracted and the total number of entries.
+ * @param concurrencyLimit - The maximum number of files to process concurrently.
  *
  * @returns A promise that resolves when extraction is complete.
  */
@@ -146,7 +154,8 @@ async function extractAll(
 	buffer: Buffer,
 	entries: Map<string, ZipEntry>,
 	outputDir: string,
-	onProgress: ZipProgressCallback = () => {}
+	onProgress: ZipProgressCallback = () => {},
+	concurrencyLimit: number = DEFAULT_CONCURRENCY
 ): Promise<void> {
 	const createdDirs = new Set<string>();
 	const entryIterator = entries.values();
@@ -175,7 +184,8 @@ async function extractAll(
 	// Loop to manage concurrency
 	while (true) {
 		// Fill the pool up to the concurrency limit as long as there are entries
-		while (activePromises.length < CONCURRENCY_LIMIT && !iteratorResult.done) {
+		while (activePromises.length < concurrencyLimit && !iteratorResult.done) {
+			// <-- Use the parameter here
 			const entry = iteratorResult.value;
 			const promise = processEntry(entry).then(() => {
 				// When a promise finishes, remove it from the active pool
@@ -468,13 +478,13 @@ export function getEntriesFromCentralDirectory(
 // 	console.log(`${Date.now() - startTime}ms`);
 // })();
 
-(async () => {
-	const startTime = Date.now();
-	const zipper = createZipReader('out/forge-installer.jar');
-	await zipper.getEntry('install_profile.json')?.getText();
-	await zipper.extractAll('out/forge-installer');
-	console.log(`${Date.now() - startTime}ms`);
-})();
+// (async () => {
+// 	const startTime = Date.now();
+// 	const zipper = createZipReader('out/forge-installer.jar');
+// 	await zipper.getEntry('install_profile.json')?.getText();
+// 	await zipper.extractAll('out/forge-installer');
+// 	console.log(`${Date.now() - startTime}ms`);
+// })();
 
 // async function extractZip(zipFilePath: string, outputDir: string) {
 // 	try {
