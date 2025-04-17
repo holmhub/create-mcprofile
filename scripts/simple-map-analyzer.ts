@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { dirname, relative, resolve, sep } from 'node:path';
 
@@ -20,8 +21,11 @@ async function analyzeMap(mapPath: string): Promise<void> {
 
 		// Ensure sourcesContent exists and matches sources length
 		if (
-			!(mapData.sources && mapData.sourcesContent) ||
-			mapData.sources.length !== mapData.sourcesContent.length
+			!(
+				Array.isArray(mapData.sources) &&
+				Array.isArray(mapData.sourcesContent) &&
+				mapData.sources.length === mapData.sourcesContent.length
+			)
 		) {
 			console.error(
 				'Source map must contain a valid "sources" and "sourcesContent" array of matching lengths.'
@@ -47,7 +51,8 @@ async function analyzeMap(mapPath: string): Promise<void> {
 		const directoryTotals: Record<string, number> = {};
 		const topLevelDirs = new Set<string>();
 		for (const info of sourceSizes) {
-			const firstSeparatorIndex = info.path.indexOf(sep);
+			const normalizedPath = info.path.split(/[/\\]/).join(sep);
+			const firstSeparatorIndex = normalizedPath.indexOf(sep);
 			let dirName = '[root]';
 			if (firstSeparatorIndex !== -1) {
 				dirName = info.path.substring(0, firstSeparatorIndex);
@@ -68,12 +73,16 @@ async function analyzeMap(mapPath: string): Promise<void> {
 		console.log('Totals by Top-Level Directory:');
 		console.log('-------------------------------------------');
 		const sortedDirs = Array.from(topLevelDirs).sort();
+		let grandTotal = 0;
 		for (const dirName of sortedDirs) {
 			const totalSize = directoryTotals[dirName] || 0;
+			grandTotal += totalSize;
 			console.log(
 				`${(totalSize / 1024).toFixed(2).padStart(7)} KB - ${dirName}${sep}`
 			);
 		}
+		console.log('-------------------------------------------');
+		console.log(`${(grandTotal / 1024).toFixed(2).padStart(7)} KB - TOTAL`);
 	} catch (error: unknown) {
 		if (error instanceof Error) {
 			console.error(`Error analyzing source map: ${error.message}`);
@@ -93,4 +102,10 @@ if (!mapFilePath) {
 	process.exit(1);
 }
 
-analyzeMap(resolve(mapFilePath));
+const resolvedPath = resolve(mapFilePath);
+if (!existsSync(resolvedPath)) {
+	console.error(`Error: File not found: ${resolvedPath}`);
+	process.exit(1);
+}
+
+analyzeMap(resolvedPath);
