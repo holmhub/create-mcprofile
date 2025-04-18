@@ -38,8 +38,8 @@
 	"scripts": {
 		"build": "rm -rf dist && bun build ./index.ts --outdir=dist --target=node --minify --sourcemap=external --define=process.env.NODE_ENV:'\"production\"' --drop=console --drop=debugger",
 		"prepare": "bun run build",
-		"prepublishOnly": "bun run build",
-		"prerelease": "cp ../README.md ./README.md && rm dist/index.js.map",
+		"prepublishOnly": "bun run build && rm src/dist/index.js.map",
+		"prerelease": "cp ../README.md ./README.md",
 		"release": "npx standard-version && git push --follow-tags origin main && npm publish",
 		"postrelease": "rm README.md"
 	}
