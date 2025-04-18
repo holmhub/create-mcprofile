@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.17](https://github.com/holmhub/create-mcprofile/compare/v0.0.16...v0.0.17) (2025-04-18)
+
+
+### Bug Fixes
+
+* **simple-map-analyzer:** improve path handling and add file existence check ([5a9a940](https://github.com/holmhub/create-mcprofile/commit/5a9a940c9f98a91123f6768b0a97fbaac1196c22))
+
 ### [0.0.16](https://github.com/holmityd/create-mcprofile/compare/v0.0.15...v0.0.16) (2025-04-17)
 
 
