@@ -1,6 +1,6 @@
 {
 	"name": "create-mcprofile",
-	"version": "0.0.19",
+	"version": "0.0.20",
 	"type": "module",
 	"module": "index.ts",
 	"bin": {
