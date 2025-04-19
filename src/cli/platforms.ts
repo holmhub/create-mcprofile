@@ -1,4 +1,3 @@
-import { Database } from 'bun:sqlite';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -10,17 +9,29 @@ interface ProfileData {
 	icon_path: string | null;
 }
 
-export function getModrinthProfile(
+// Dynamic import based on runtime
+const getDatabase = async () => {
+	if (process.versions.bun) {
+		const { Database } = await import('bun:sqlite');
+		return Database;
+	}
+
+	const { DatabaseSync } = await import('node:sqlite');
+	return DatabaseSync;
+};
+
+export async function getModrinthProfile(
 	profilesDirectory: string,
 	profileName: string
-): ProfileData | null {
+): Promise<ProfileData | null> {
 	const dbPath = resolve(`${profilesDirectory}/../app.db`);
 	if (!existsSync(dbPath)) return null;
 
-	const db = new Database(dbPath);
 	try {
-		const data = db
-			.prepare(`
+		const DB = await getDatabase();
+		const db = new DB(dbPath);
+
+		const stmt = db.prepare(`
             SELECT 
                 game_version,
                 mod_loader,
@@ -28,13 +39,12 @@ export function getModrinthProfile(
                 override_mc_memory_max,
                 icon_path 
             FROM profiles 
-            WHERE path=? LIMIT 1`)
-			.get(profileName) as ProfileData | undefined;
+            WHERE path = ?`);
 
+		const data = stmt.get(profileName) as ProfileData | undefined;
+		db.close();
 		return data ?? null;
 	} catch {
 		return null;
-	} finally {
-		db.close();
 	}
 }

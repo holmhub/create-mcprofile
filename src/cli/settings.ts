@@ -85,7 +85,7 @@ export async function getProfileSettings(
 	}
 
 	if (profileSettingsPath.includes('ModrinthApp')) {
-		const modrinthProfile = getModrinthProfile(
+		const modrinthProfile = await getModrinthProfile(
 			settings.ProfilesDirectory,
 			profile
 		);
