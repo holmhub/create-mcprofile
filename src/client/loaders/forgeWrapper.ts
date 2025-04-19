@@ -3,8 +3,8 @@ import { dirname, join } from 'node:path';
 import { DEFAULT_URLS } from '@/client/constants.ts';
 import { parseVersion } from '@/client/handlers/version.ts';
 import type { IVersionManifest } from '@/client/types.ts';
-import { createZipReader } from '@/client/utils/extract.ts';
 import { getUniqueNonNullValues } from '@/client/utils/other.ts';
+import { createZipReader } from '@holmlibs/unzip';
 
 const FORGE_WRAPPER = {
 	baseUrl: 'https://github.com/ZekerZhayard/ForgeWrapper/releases/download/',

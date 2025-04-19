@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readdirSync, unlinkSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { createZipReader } from '@holmlibs/unzip';
 import { client } from '../constants.ts';
 import { downloadAsync } from '../core/download.ts';
 import type {
@@ -7,7 +8,6 @@ import type {
 	ILauncherOptions,
 	IVersionManifest,
 } from '../types.ts';
-import { createZipReader } from '../utils/extract.ts';
 import { getOS, parseRule } from '../utils/system.ts';
 import { parseVersion } from './version.ts';
 
