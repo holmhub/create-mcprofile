@@ -104,7 +104,27 @@ export async function createNewProfile(
 
 	if (!confirmed) return;
 
-	const profilePath = join(settings.ProfilesDirectory, profileName);
+	await createProfileSettings(
+		settings.ProfilesDirectory,
+		profileName,
+		loader,
+		version,
+		loaderVersion || '',
+		ram
+	);
+
+	return profileName;
+}
+
+export async function createProfileSettings(
+	directory: string,
+	profile: string,
+	loader: LoaderType,
+	version: string,
+	loaderVersion: string,
+	ram: string
+) {
+	const profilePath = join(directory, profile);
 	mkdirSync(profilePath, { recursive: true });
 	let loaderManifest: string | undefined;
 	if (loader === 'fabric') {
@@ -134,5 +154,4 @@ export async function createNewProfile(
 		RAM: ram,
 	};
 	saveIniFile(profileSettings, join(profilePath, 'profile-settings.ini'));
-	return profileName;
 }
