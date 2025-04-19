@@ -32,6 +32,8 @@ export function getModrinthProfile(
 			.get(profileName) as ProfileData | undefined;
 
 		return data ?? null;
+	} catch {
+		return null;
 	} finally {
 		db.close();
 	}

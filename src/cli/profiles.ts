@@ -116,6 +116,16 @@ export async function createNewProfile(
 	return profileName;
 }
 
+/**
+ * Creates profile settings for a given profile directory.
+ *
+ * @param directory - The base directory where profiles are stored
+ * @param profile - The name of the profile to create
+ * @param loader - The type of mod loader to use
+ * @param version - The Minecraft version
+ * @param loaderVersion - The version of the mod loader
+ * @param ram - The RAM allocation for the profile
+ */
 export async function createProfileSettings(
 	directory: string,
 	profile: string,

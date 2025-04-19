@@ -79,26 +79,29 @@ export async function getProfileSettings(
 ) {
 	const profilePath = join(settings.ProfilesDirectory, profile);
 	const profileSettingsPath = join(profilePath, 'profile-settings.ini');
-	while (!existsSync(profileSettingsPath)) {
-		if (profileSettingsPath.includes('ModrinthApp')) {
-			const modrinthProfile = getModrinthProfile(
+
+	if (existsSync(profileSettingsPath)) {
+		return readIniFile<ProfileSettings>(profileSettingsPath);
+	}
+
+	if (profileSettingsPath.includes('ModrinthApp')) {
+		const modrinthProfile = getModrinthProfile(
+			settings.ProfilesDirectory,
+			profile
+		);
+		if (modrinthProfile?.game_version) {
+			await createProfileSettings(
 				settings.ProfilesDirectory,
-				profile
+				profile,
+				(modrinthProfile.mod_loader || 'fabric') as LoaderType,
+				modrinthProfile.game_version,
+				modrinthProfile.mod_loader_version || '',
+				modrinthProfile.override_mc_memory_max || '4'
 			);
-			if (modrinthProfile) {
-				await createProfileSettings(
-					settings.ProfilesDirectory,
-					profile,
-					(modrinthProfile.mod_loader || 'fabric') as LoaderType,
-					modrinthProfile.game_version || '',
-					modrinthProfile.mod_loader_version || '',
-					modrinthProfile.override_mc_memory_max || '4'
-				);
-
-				continue;
-			}
 		}
+	}
 
+	while (!existsSync(profileSettingsPath)) {
 		await createNewProfile(settings, profile);
 	}
 	return readIniFile<ProfileSettings>(profileSettingsPath);
