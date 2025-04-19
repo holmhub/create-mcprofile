@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.22](https://github.com/holmhub/create-mcprofile/compare/v0.0.20...v0.0.22) (2025-04-19)
+
+
+### Bug Fixes
+
+* **profiles:** handle errors in getModrinthProfile and optimize profile settings creation ([e58207d](https://github.com/holmhub/create-mcprofile/commit/e58207d27683cf7387da4bdb408d01af3dea8a0b))
+
 ### [0.0.21](https://github.com/holmhub/create-mcprofile/compare/v0.0.20...v0.0.21) (2025-04-19)
 
 
