@@ -104,7 +104,37 @@ export async function createNewProfile(
 
 	if (!confirmed) return;
 
-	const profilePath = join(settings.ProfilesDirectory, profileName);
+	await createProfileSettings(
+		settings.ProfilesDirectory,
+		profileName,
+		loader,
+		version,
+		loaderVersion || '',
+		ram
+	);
+
+	return profileName;
+}
+
+/**
+ * Creates profile settings for a given profile directory.
+ *
+ * @param directory - The base directory where profiles are stored
+ * @param profile - The name of the profile to create
+ * @param loader - The type of mod loader to use
+ * @param version - The Minecraft version
+ * @param loaderVersion - The version of the mod loader
+ * @param ram - The RAM allocation for the profile
+ */
+export async function createProfileSettings(
+	directory: string,
+	profile: string,
+	loader: LoaderType,
+	version: string,
+	loaderVersion: string,
+	ram: string
+) {
+	const profilePath = join(directory, profile);
 	mkdirSync(profilePath, { recursive: true });
 	let loaderManifest: string | undefined;
 	if (loader === 'fabric') {
@@ -134,5 +164,4 @@ export async function createNewProfile(
 		RAM: ram,
 	};
 	saveIniFile(profileSettings, join(profilePath, 'profile-settings.ini'));
-	return profileName;
 }

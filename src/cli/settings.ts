@@ -1,9 +1,10 @@
 import { existsSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { note, spinner, text } from '@clack/prompts';
-import { createNewProfile } from './profiles.ts';
-import type { LauncherSettings, ProfileSettings } from './types.ts';
+import { spinner, text } from '@clack/prompts';
+import { getModrinthProfile } from './platforms.ts';
+import { createNewProfile, createProfileSettings } from './profiles.ts';
+import type { LauncherSettings, LoaderType, ProfileSettings } from './types.ts';
 import { readIniFile, saveIniFile } from './utils/ini.ts';
 
 const USERNAME = process.env.USERNAME || 'Player';
@@ -78,8 +79,29 @@ export async function getProfileSettings(
 ) {
 	const profilePath = join(settings.ProfilesDirectory, profile);
 	const profileSettingsPath = join(profilePath, 'profile-settings.ini');
+
+	if (existsSync(profileSettingsPath)) {
+		return readIniFile<ProfileSettings>(profileSettingsPath);
+	}
+
+	if (profileSettingsPath.includes('ModrinthApp')) {
+		const modrinthProfile = getModrinthProfile(
+			settings.ProfilesDirectory,
+			profile
+		);
+		if (modrinthProfile?.game_version) {
+			await createProfileSettings(
+				settings.ProfilesDirectory,
+				profile,
+				(modrinthProfile.mod_loader || 'fabric') as LoaderType,
+				modrinthProfile.game_version,
+				modrinthProfile.mod_loader_version || '',
+				modrinthProfile.override_mc_memory_max || '4'
+			);
+		}
+	}
+
 	while (!existsSync(profileSettingsPath)) {
-		note(`Profile settings not found at ${profileSettingsPath}`);
 		await createNewProfile(settings, profile);
 	}
 	return readIniFile<ProfileSettings>(profileSettingsPath);
