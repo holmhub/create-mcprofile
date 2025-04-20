@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.23](https://github.com/holmhub/create-mcprofile/compare/v0.0.22...v0.0.23) (2025-04-20)
+
+
+### Features
+
+* **platforms:** add CurseForge profile support ([838c2bf](https://github.com/holmhub/create-mcprofile/commit/838c2bffb01a17783709a679216f0cab5577bd5c))
+
 ### [0.0.22](https://github.com/holmhub/create-mcprofile/compare/v0.0.20...v0.0.22) (2025-04-19)
 
 
