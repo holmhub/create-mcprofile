@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { spinner, text } from '@clack/prompts';
-import { getModrinthProfile } from './platforms.ts';
+import { getCurseforgeProfile, getModrinthProfile } from './platforms.ts';
 import { createNewProfile, createProfileSettings } from './profiles.ts';
 import type { LauncherSettings, LoaderType, ProfileSettings } from './types.ts';
 import { readIniFile, saveIniFile } from './utils/ini.ts';
@@ -82,6 +82,23 @@ export async function getProfileSettings(
 
 	if (existsSync(profileSettingsPath)) {
 		return readIniFile<ProfileSettings>(profileSettingsPath);
+	}
+
+	if (profileSettingsPath.includes('curseforge')) {
+		const curseforgeProfile = await getCurseforgeProfile(
+			settings.ProfilesDirectory,
+			profile
+		);
+		if (curseforgeProfile?.game_version) {
+			await createProfileSettings(
+				settings.ProfilesDirectory,
+				profile,
+				(curseforgeProfile.mod_loader || 'fabric') as LoaderType,
+				curseforgeProfile.game_version,
+				curseforgeProfile.mod_loader_version || '',
+				curseforgeProfile.override_mc_memory_max || '4'
+			);
+		}
 	}
 
 	if (profileSettingsPath.includes('ModrinthApp')) {
