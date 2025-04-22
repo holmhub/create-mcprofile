@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.25](https://github.com/holmhub/create-mcprofile/compare/v0.0.24...v0.0.25) (2025-04-22)
+
+
+### Bug Fixes
+
+* **launch:** handle WebP icon conversion failure and ensure process exit ([2748c36](https://github.com/holmhub/create-mcprofile/commit/2748c3651eeb3b3d82579b34475231ceaabdc57c))
+
 ### [0.0.24](https://github.com/holmhub/create-mcprofile/compare/v0.0.23...v0.0.24) (2025-04-22)
 
 
