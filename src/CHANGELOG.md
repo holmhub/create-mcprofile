@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.24](https://github.com/holmhub/create-mcprofile/compare/v0.0.23...v0.0.24) (2025-04-22)
+
+
+### Features
+
+* **profiles:** add desktop shortcut creation for Windows profiles ([e95dbc4](https://github.com/holmhub/create-mcprofile/commit/e95dbc44d1eb2a3eb58e136efc2660afc6b7f602))
+
+
+### Bug Fixes
+
+* **launch-script:** handle spaces in launch arguments for .bat file ([c2abe4c](https://github.com/holmhub/create-mcprofile/commit/c2abe4cdddae1a07ccf716fbb4a480fddf264740))
+* **launch:** update shortcut creation to hide console window ([8ec28da](https://github.com/holmhub/create-mcprofile/commit/8ec28da86c47d953757de22c9a4970a9245652f5))
+
 ### [0.0.23](https://github.com/holmhub/create-mcprofile/compare/v0.0.22...v0.0.23) (2025-04-20)
 
 
