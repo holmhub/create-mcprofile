@@ -230,14 +230,6 @@ function createLaunchScripts(
 	return { batPath, shPath };
 }
 
-// (async () => {
-// 	await createShortcut(
-// 		'E:/Users/Nicat/AppData/Roaming/ModrinthApp/profiles',
-// 		'Simply Optimized',
-// 		'E:/Users/Nicat/AppData/Roaming/ModrinthApp/caches/icons/f8b7d5907e8869abcf4b471d13a7b090a8b5120d.webp'
-// 	);
-// })();
-
 export async function createShortcut(
 	gameDirectory: string,
 	profileName: string,
