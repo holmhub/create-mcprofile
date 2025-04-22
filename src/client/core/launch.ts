@@ -268,8 +268,10 @@ export async function createShortcut(
 			const { promisify } = await import('node:util');
 			const execAsync = promisify(exec);
 
-			// Using magick command (ImageMagick)
-			await execAsync(`magick convert "${iconPath}" "${icoPath}"`);
+			// First try converting with size limit
+			await execAsync(
+				`magick convert "${iconPath}" -resize 256x256 "${icoPath}"`
+			);
 
 			// Verify output file was created
 			if (!existsSync(icoPath)) {
@@ -279,6 +281,7 @@ export async function createShortcut(
 			iconPath = icoPath;
 		} catch (error) {
 			console.error('WebP conversion failed:', (error as Error).message);
+			// Fallback to using the original WebP file if conversion fails
 			iconPath = '';
 		}
 	}
