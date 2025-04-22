@@ -277,20 +277,29 @@ export async function createShortcut(
 	}
 
 	const batPath = join(shortcutDir, `${launcherName}.bat`);
+	const vbsPath = join(shortcutDir, `${launcherName}.vbs`).replace(/\//g, '\\');
 
 	const vbsContent = `
 Set WshShell = WScript.CreateObject("WScript.Shell")
 Set shortcut = WshShell.CreateShortcut("${shortcutPath}")
-shortcut.TargetPath = "${batPath}"
+shortcut.TargetPath = "wscript.exe"
+shortcut.Arguments = "//B //NOLOGO ""${vbsPath}"""
 shortcut.WorkingDirectory = "${shortcutDir}"
 shortcut.IconLocation = "${iconPath}"
 shortcut.Save
+
+' Create the run.vbs script that will execute the batch file without showing console
+Set fso = CreateObject("Scripting.FileSystemObject")
+Set runFile = fso.CreateTextFile("${vbsPath}", True)
+runFile.WriteLine "Set WshShell = CreateObject(""WScript.Shell"")"
+runFile.WriteLine "WshShell.Run """"""${batPath}"""""", 0, False"
+runFile.Close
 `;
-	const vbsPath = join(shortcutDir, 'create_shortcut.vbs');
-	writeFileSync(vbsPath, vbsContent, 'utf-8');
-	spawn('wscript', [vbsPath], { stdio: 'ignore', detached: true }).on(
+	const installVbsPath = join(shortcutDir, 'create_shortcut.vbs');
+	writeFileSync(installVbsPath, vbsContent, 'utf-8');
+	spawn('wscript', [installVbsPath], { stdio: 'ignore', detached: true }).on(
 		'close',
-		() => unlinkSync(vbsPath)
+		() => unlinkSync(installVbsPath)
 	);
 }
 
