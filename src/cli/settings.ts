@@ -113,7 +113,8 @@ export async function getProfileSettings(
 				(modrinthProfile.mod_loader || 'fabric') as LoaderType,
 				modrinthProfile.game_version,
 				modrinthProfile.mod_loader_version || '',
-				modrinthProfile.override_mc_memory_max || '4'
+				modrinthProfile.override_mc_memory_max || '4',
+				modrinthProfile.icon_path || ''
 			);
 		}
 	}

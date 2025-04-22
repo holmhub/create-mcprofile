@@ -1,5 +1,12 @@
 import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync } from 'node:fs';
+import {
+	chmodSync,
+	existsSync,
+	mkdirSync,
+	unlinkSync,
+	writeFileSync,
+} from 'node:fs';
+import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { DEFAULT_URLS, client } from '../constants.ts';
 import { getAssets } from '../handlers/assets.ts';
@@ -19,6 +26,8 @@ import { getOS } from '../utils/system.ts';
 import { getLaunchOptions } from './arguments.ts';
 import { getJVM, selectJavaPath } from './java.ts';
 import { configureLog4jForVersion } from './prepare.ts';
+
+const launcherName = 'launch-minecraft';
 
 export async function init(options: ILauncherOptions) {
 	initializeLauncherOptions(options);
@@ -133,6 +142,8 @@ export async function init(options: ILauncherOptions) {
 	// Handle Java path selection
 	options.javaPath = await selectJavaPath(options);
 
+	createLaunchScripts(launchArguments, options);
+
 	return startMinecraft(launchArguments, options);
 }
 
@@ -192,8 +203,116 @@ function addForgeWrapperArguments(options: ILauncherOptions) {
 		: forgeWrapperAgrs;
 }
 
+function createLaunchScripts(
+	launchArguments: string[],
+	options: ILauncherOptions
+) {
+	const scriptDir = resolve(options.overrides?.gameDirectory || options.root);
+	mkdirSync(scriptDir, { recursive: true });
+
+	const javaw = `${options.javaPath || 'java'}`;
+
+	// Create .bat file for Windows
+	const batContent = `@echo off\r\n"${javaw}" ${launchArguments
+		.map((arg) =>
+			arg.includes(' ') && !arg.startsWith('"') ? `"${arg}"` : arg
+		)
+		.join(' ')}`;
+	const batPath = join(scriptDir, `${launcherName}.bat`);
+	writeFileSync(batPath, batContent, 'utf-8');
+
+	// Create .sh file for Unix-like systems
+	const shContent = `#!/bin/sh\n"${javaw}" ${launchArguments
+		.map((arg) => (arg.includes(' ') ? `'${arg.replace(/'/g, `'\\''`)}'` : arg))
+		.join(' ')}`;
+	const shPath = join(scriptDir, `${launcherName}.sh`);
+	writeFileSync(shPath, shContent, 'utf-8');
+
+	// Make .sh executable on Unix-like systems
+	if (getOS() !== 'windows') {
+		chmodSync(shPath, '755');
+	}
+
+	client.emit(
+		'debug',
+		`Launch scripts created at: ${resolve(options.overrides?.gameDirectory || options.root)}`
+	);
+
+	return { batPath, shPath };
+}
+
+export async function createShortcut(
+	gameDirectory: string,
+	profileName: string,
+	icon?: string
+) {
+	const shortcutDir = join(gameDirectory, profileName).replace(/\//g, '\\');
+	const shortcutPath = join(homedir(), 'Desktop', `${profileName}.lnk`).replace(
+		/\//g,
+		'\\'
+	);
+	let iconPath = icon
+		? icon.replace(/\//g, '\\')
+		: join(shortcutDir, 'icon.ico').replace(/\//g, '\\');
+
+	// Convert webp to ico if needed
+	if (iconPath.toLowerCase().endsWith('.webp')) {
+		const icoPath = join(shortcutDir, 'icon.ico').replace(/\//g, '\\');
+		try {
+			// Verify source file exists first
+			if (!existsSync(iconPath)) {
+				throw new Error(`Source WebP file not found: ${iconPath}`);
+			}
+
+			const { exec } = await import('node:child_process');
+			const { promisify } = await import('node:util');
+			const execAsync = promisify(exec);
+
+			// Using magick command (ImageMagick)
+			await execAsync(`magick convert "${iconPath}" "${icoPath}"`);
+
+			// Verify output file was created
+			if (!existsSync(icoPath)) {
+				throw new Error('ICO file creation failed');
+			}
+
+			iconPath = icoPath;
+		} catch (error) {
+			console.error('WebP conversion failed:', (error as Error).message);
+			iconPath = '';
+		}
+	}
+
+	const batPath = join(shortcutDir, `${launcherName}.bat`);
+	const vbsPath = join(shortcutDir, `${launcherName}.vbs`).replace(/\//g, '\\');
+
+	const vbsContent = `
+Set WshShell = WScript.CreateObject("WScript.Shell")
+Set shortcut = WshShell.CreateShortcut("${shortcutPath}")
+shortcut.TargetPath = "wscript.exe"
+shortcut.Arguments = "//B //NOLOGO ""${vbsPath}"""
+shortcut.WorkingDirectory = "${shortcutDir}"
+shortcut.IconLocation = "${iconPath}"
+shortcut.Save
+
+' Create the run.vbs script that will execute the batch file without showing console
+Set fso = CreateObject("Scripting.FileSystemObject")
+Set runFile = fso.CreateTextFile("${vbsPath}", True)
+runFile.WriteLine "Set WshShell = CreateObject(""WScript.Shell"")"
+runFile.WriteLine "WshShell.Run """"""${batPath}"""""", 0, False"
+runFile.Close
+`;
+	const installVbsPath = join(shortcutDir, 'create_shortcut.vbs');
+	writeFileSync(installVbsPath, vbsContent, 'utf-8');
+	spawn('wscript', [installVbsPath], { stdio: 'ignore', detached: true }).on(
+		'close',
+		() => unlinkSync(installVbsPath)
+	);
+}
+
 function startMinecraft(launchArguments: string[], options: ILauncherOptions) {
 	client.emit('debug', '🚀 Launching Minecraft...');
+
 	const minecraft = spawn(
 		options.javaPath ? options.javaPath : 'java',
 		launchArguments,

@@ -1,7 +1,9 @@
 import { existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { createShortcut } from '@/client/core/launch.ts';
 import { setupFabric } from '@/client/loaders/fabric';
 import { setupForge } from '@/client/loaders/forge.ts';
+import { getOS } from '@/client/utils/system.ts';
 import { confirm, note, select, spinner, text } from '@clack/prompts';
 import { getLoader } from './loader.ts';
 import { selectRAMAllocation } from './ram.ts';
@@ -132,7 +134,8 @@ export async function createProfileSettings(
 	loader: LoaderType,
 	version: string,
 	loaderVersion: string,
-	ram: string
+	ram: string,
+	icon?: string
 ) {
 	const profilePath = join(directory, profile);
 	mkdirSync(profilePath, { recursive: true });
@@ -163,5 +166,11 @@ export async function createProfileSettings(
 		...(loaderManifest && { LoaderManifest: loaderManifest }),
 		RAM: ram,
 	};
+
+	// Create desktop shortcut for Windows
+	if (getOS() === 'windows') {
+		await createShortcut(directory, profile, icon);
+	}
+
 	saveIniFile(profileSettings, join(profilePath, 'profile-settings.ini'));
 }
