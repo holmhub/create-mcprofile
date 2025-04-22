@@ -230,15 +230,55 @@ function createLaunchScripts(
 	return { batPath, shPath };
 }
 
-export function createShortcut(
+// (async () => {
+// 	await createShortcut(
+// 		'E:/Users/Nicat/AppData/Roaming/ModrinthApp/profiles',
+// 		'Simply Optimized',
+// 		'E:/Users/Nicat/AppData/Roaming/ModrinthApp/caches/icons/f8b7d5907e8869abcf4b471d13a7b090a8b5120d.webp'
+// 	);
+// })();
+
+export async function createShortcut(
 	gameDirectory: string,
 	profileName: string,
 	icon?: string
 ) {
-	const shortcutDir = join(gameDirectory, profileName);
-	const shortcutPath = join(homedir(), 'Desktop', `${profileName}.lnk`);
-	const iconPath = icon || join(shortcutDir, 'icon.ico');
-	console.log(iconPath);
+	const shortcutDir = join(gameDirectory, profileName).replace(/\//g, '\\');
+	const shortcutPath = join(homedir(), 'Desktop', `${profileName}.lnk`).replace(
+		/\//g,
+		'\\'
+	);
+	let iconPath = icon
+		? icon.replace(/\//g, '\\')
+		: join(shortcutDir, 'icon.ico').replace(/\//g, '\\');
+
+	// Convert webp to ico if needed
+	if (iconPath.toLowerCase().endsWith('.webp')) {
+		const icoPath = join(shortcutDir, 'icon.ico').replace(/\//g, '\\');
+		try {
+			// Verify source file exists first
+			if (!existsSync(iconPath)) {
+				throw new Error(`Source WebP file not found: ${iconPath}`);
+			}
+
+			const { exec } = await import('node:child_process');
+			const { promisify } = await import('node:util');
+			const execAsync = promisify(exec);
+
+			// Using magick command (ImageMagick)
+			await execAsync(`magick convert "${iconPath}" "${icoPath}"`);
+
+			// Verify output file was created
+			if (!existsSync(icoPath)) {
+				throw new Error('ICO file creation failed');
+			}
+
+			iconPath = icoPath;
+		} catch (error) {
+			console.error('WebP conversion failed:', (error as Error).message);
+			iconPath = '';
+		}
+	}
 
 	const batPath = join(shortcutDir, `${launcherName}.bat`);
 
