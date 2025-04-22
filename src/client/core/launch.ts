@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { DEFAULT_URLS, client } from '../constants.ts';
 import { getAssets } from '../handlers/assets.ts';
@@ -19,6 +19,10 @@ import { getOS } from '../utils/system.ts';
 import { getLaunchOptions } from './arguments.ts';
 import { getJVM, selectJavaPath } from './java.ts';
 import { configureLog4jForVersion } from './prepare.ts';
+import { chmod } from 'node:fs/promises';
+import { homedir } from 'node:os';
+
+const launcherName = 'launch-minecraft';
 
 export async function init(options: ILauncherOptions) {
 	initializeLauncherOptions(options);
@@ -133,6 +137,8 @@ export async function init(options: ILauncherOptions) {
 	// Handle Java path selection
 	options.javaPath = await selectJavaPath(options);
 
+	createLaunchScripts(launchArguments, options);
+
 	return startMinecraft(launchArguments, options);
 }
 
@@ -192,8 +198,69 @@ function addForgeWrapperArguments(options: ILauncherOptions) {
 		: forgeWrapperAgrs;
 }
 
+function createLaunchScripts(
+	launchArguments: string[],
+	options: ILauncherOptions
+) {
+	const scriptDir = resolve(options.overrides?.gameDirectory || options.root);
+	mkdirSync(scriptDir, { recursive: true });
+
+	const javaw = `${options.javaPath || 'java'}w`;
+
+	// Create .bat file for Windows
+	const batContent = `@echo off\r\n"${javaw}" ${launchArguments.join(' ')}`;
+	const batPath = join(scriptDir, `${launcherName}.bat`);
+	writeFileSync(batPath, batContent, 'utf-8');
+
+	// Create .sh file for Unix-like systems
+	const shContent = `#!/bin/sh\n"${javaw}" ${launchArguments.join(' ')}`;
+	const shPath = join(scriptDir, `${launcherName}.sh`);
+	writeFileSync(shPath, shContent, 'utf-8');
+
+	// Make .sh executable on Unix-like systems
+	if (getOS() !== 'windows') {
+		chmod(shPath, '755');
+	}
+
+	client.emit(
+		'debug',
+		`Launch scripts created at: ${resolve(options.overrides?.gameDirectory || options.root)}`
+	);
+
+	return { batPath, shPath };
+}
+
+export function createShortcut(
+	gameDirectory: string,
+	profileName: string,
+	icon?: string
+) {
+	const shortcutDir = join(gameDirectory, profileName);
+	const shortcutPath = join(homedir(), 'Desktop', `${profileName}.lnk`);
+	const iconPath = icon || join(shortcutDir, 'icon.ico');
+	console.log(iconPath);
+
+	const batPath = join(shortcutDir, `${launcherName}.bat`);
+
+	const vbsContent = `
+Set WshShell = WScript.CreateObject("WScript.Shell")
+Set shortcut = WshShell.CreateShortcut("${shortcutPath}")
+shortcut.TargetPath = "${batPath}"
+shortcut.WorkingDirectory = "${shortcutDir}"
+shortcut.IconLocation = "${iconPath}"
+shortcut.Save
+`;
+	const vbsPath = join(shortcutDir, 'create_shortcut.vbs');
+	writeFileSync(vbsPath, vbsContent, 'utf-8');
+	spawn('wscript', [vbsPath], { stdio: 'ignore', detached: true }).on(
+		'close',
+		() => unlinkSync(vbsPath)
+	);
+}
+
 function startMinecraft(launchArguments: string[], options: ILauncherOptions) {
 	client.emit('debug', '🚀 Launching Minecraft...');
+
 	const minecraft = spawn(
 		options.javaPath ? options.javaPath : 'java',
 		launchArguments,

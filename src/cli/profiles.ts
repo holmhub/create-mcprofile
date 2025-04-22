@@ -8,6 +8,8 @@ import { selectRAMAllocation } from './ram.ts';
 import type { LauncherSettings, LoaderType, ProfileSettings } from './types.ts';
 import { saveIniFile } from './utils/ini.ts';
 import { selectMinecraftVersion } from './versions.ts';
+import { createShortcut } from '@/client/core/launch.ts';
+import { getOS } from '@/client/utils/system.ts';
 
 export async function selectProfile(
 	settings: LauncherSettings
@@ -132,7 +134,8 @@ export async function createProfileSettings(
 	loader: LoaderType,
 	version: string,
 	loaderVersion: string,
-	ram: string
+	ram: string,
+	icon?: string
 ) {
 	const profilePath = join(directory, profile);
 	mkdirSync(profilePath, { recursive: true });
@@ -163,5 +166,11 @@ export async function createProfileSettings(
 		...(loaderManifest && { LoaderManifest: loaderManifest }),
 		RAM: ram,
 	};
+
+	// Create desktop shortcut for Windows
+	if (getOS() === 'windows') {
+		createShortcut(directory, profile, icon);
+	}
+
 	saveIniFile(profileSettings, join(profilePath, 'profile-settings.ini'));
 }
