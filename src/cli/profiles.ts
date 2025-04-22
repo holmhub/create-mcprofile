@@ -1,15 +1,15 @@
 import { existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { createShortcut } from '@/client/core/launch.ts';
 import { setupFabric } from '@/client/loaders/fabric';
 import { setupForge } from '@/client/loaders/forge.ts';
+import { getOS } from '@/client/utils/system.ts';
 import { confirm, note, select, spinner, text } from '@clack/prompts';
 import { getLoader } from './loader.ts';
 import { selectRAMAllocation } from './ram.ts';
 import type { LauncherSettings, LoaderType, ProfileSettings } from './types.ts';
 import { saveIniFile } from './utils/ini.ts';
 import { selectMinecraftVersion } from './versions.ts';
-import { createShortcut } from '@/client/core/launch.ts';
-import { getOS } from '@/client/utils/system.ts';
 
 export async function selectProfile(
 	settings: LauncherSettings
@@ -169,7 +169,7 @@ export async function createProfileSettings(
 
 	// Create desktop shortcut for Windows
 	if (getOS() === 'windows') {
-		createShortcut(directory, profile, icon);
+		await createShortcut(directory, profile, icon);
 	}
 
 	saveIniFile(profileSettings, join(profilePath, 'profile-settings.ini'));

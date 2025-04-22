@@ -1,5 +1,12 @@
 import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
+import {
+	chmodSync,
+	existsSync,
+	mkdirSync,
+	unlinkSync,
+	writeFileSync,
+} from 'node:fs';
+import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { DEFAULT_URLS, client } from '../constants.ts';
 import { getAssets } from '../handlers/assets.ts';
@@ -19,8 +26,6 @@ import { getOS } from '../utils/system.ts';
 import { getLaunchOptions } from './arguments.ts';
 import { getJVM, selectJavaPath } from './java.ts';
 import { configureLog4jForVersion } from './prepare.ts';
-import { chmod } from 'node:fs/promises';
-import { homedir } from 'node:os';
 
 const launcherName = 'launch-minecraft';
 
@@ -217,13 +222,15 @@ function createLaunchScripts(
 	writeFileSync(batPath, batContent, 'utf-8');
 
 	// Create .sh file for Unix-like systems
-	const shContent = `#!/bin/sh\n"${javaw}" ${launchArguments.join(' ')}`;
+	const shContent = `#!/bin/sh\n"${javaw}" ${launchArguments
+		.map((arg) => (arg.includes(' ') ? `'${arg.replace(/'/g, `'\\''`)}'` : arg))
+		.join(' ')}`;
 	const shPath = join(scriptDir, `${launcherName}.sh`);
 	writeFileSync(shPath, shContent, 'utf-8');
 
 	// Make .sh executable on Unix-like systems
 	if (getOS() !== 'windows') {
-		chmod(shPath, '755');
+		chmodSync(shPath, '755');
 	}
 
 	client.emit(
