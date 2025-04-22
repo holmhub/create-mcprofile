@@ -205,10 +205,14 @@ function createLaunchScripts(
 	const scriptDir = resolve(options.overrides?.gameDirectory || options.root);
 	mkdirSync(scriptDir, { recursive: true });
 
-	const javaw = `${options.javaPath || 'java'}w`;
+	const javaw = `${options.javaPath || 'java'}`;
 
 	// Create .bat file for Windows
-	const batContent = `@echo off\r\n"${javaw}" ${launchArguments.join(' ')}`;
+	const batContent = `@echo off\r\n"${javaw}" ${launchArguments
+		.map((arg) =>
+			arg.includes(' ') && !arg.startsWith('"') ? `"${arg}"` : arg
+		)
+		.join(' ')}`;
 	const batPath = join(scriptDir, `${launcherName}.bat`);
 	writeFileSync(batPath, batContent, 'utf-8');
 
