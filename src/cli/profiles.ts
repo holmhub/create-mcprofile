@@ -4,7 +4,7 @@ import { createShortcut } from '@/client/core/launch.ts';
 import { setupFabric } from '@/client/loaders/fabric';
 import { setupForge } from '@/client/loaders/forge.ts';
 import { getOS } from '@/client/utils/system.ts';
-import { confirm, note, select, spinner, text } from '@clack/prompts';
+import { confirm, note, select, text } from '@clack/prompts';
 import { getLoader } from './loader.ts';
 import { selectRAMAllocation } from './ram.ts';
 import type { LauncherSettings, LoaderType, ProfileSettings } from './types.ts';
@@ -141,23 +141,17 @@ export async function createProfileSettings(
 	mkdirSync(profilePath, { recursive: true });
 	let loaderManifest: string | undefined;
 	if (loader === 'fabric') {
-		const s = spinner();
-		s.start('Downloading Fabric...');
 		loaderManifest = await setupFabric({
 			directory: profilePath,
 			gameVersion: version,
 			loaderVersion,
 		});
-		s.stop('Fabric downloaded successfully! ✨');
 	} else if (loader === 'forge') {
-		const s = spinner();
-		s.start('Downloading Forge...');
 		loaderManifest = await setupForge({
 			directory: profilePath,
 			gameVersion: version,
 			loaderVersion,
 		});
-		s.stop('Forge downloaded successfully! ✨');
 	}
 
 	// Save profile settings

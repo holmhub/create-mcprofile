@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { spinner, text } from '@clack/prompts';
+import { text } from '@clack/prompts';
 import { getCurseforgeProfile, getModrinthProfile } from './platforms.ts';
 import { createNewProfile, createProfileSettings } from './profiles.ts';
 import type { LauncherSettings, LoaderType, ProfileSettings } from './types.ts';
@@ -17,9 +17,6 @@ const SETTINGS_PATH = resolve(
 
 export async function getLauncherSettings(): Promise<LauncherSettings> {
 	if (existsSync(SETTINGS_PATH)) {
-		const s = spinner();
-		s.start('Loading existing settings...');
-		s.stop(`Settings loaded from ${SETTINGS_PATH}`);
 		return readIniFile<LauncherSettings>(SETTINGS_PATH);
 	}
 
@@ -39,14 +36,14 @@ export async function getLauncherSettings(): Promise<LauncherSettings> {
 	const gameDirectory = (await text({
 		message: 'Enter game directory',
 		placeholder: MC_PATH,
-		autocomplete: autocompleteDirectory,
+		// autocomplete: autocompleteDirectory,
 	})) as string;
 
 	// Profile directory selection
 	const profilesDirectory = (await text({
 		message: 'Enter profiles directory',
 		placeholder: VERSIONS_PATH,
-		autocomplete: autocompleteDirectory,
+		// autocomplete: autocompleteDirectory,
 	})) as string;
 
 	const settings: LauncherSettings = {
@@ -56,10 +53,7 @@ export async function getLauncherSettings(): Promise<LauncherSettings> {
 	};
 
 	// Save settings with progress indicator
-	const s = spinner();
-	s.start('Saving launcher settings...');
 	saveIniFile(settings, SETTINGS_PATH);
-	s.stop('Settings saved successfully! ✨');
 
 	return settings;
 }
@@ -133,7 +127,7 @@ export async function getProfileSettings(
  * @param input - The partial directory path to autocomplete.
  * @returns The autocompleted directory path with a trailing slash, or `undefined` if no match is found.
  */
-async function autocompleteDirectory(
+async function _autocompleteDirectory(
 	input: string
 ): Promise<string | undefined> {
 	if (!input) return;

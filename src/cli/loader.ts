@@ -42,7 +42,7 @@ export async function getLoader(
 	return (await text({
 		message: `Select ${loaderName} version`,
 		placeholder: versions[0],
-		autocomplete: versions,
+		// autocomplete: versions,
 		validate(value) {
 			if (!value) return 'Version number is required';
 			if (!versions.includes(value)) return 'Version not found in manifest';

@@ -73,7 +73,7 @@ export async function selectCustomVersion(
 	const version = (await text({
 		message: 'Enter version number',
 		placeholder: filteredVersions[0],
-		autocomplete: filteredVersions,
+		// autocomplete: filteredVersions,
 		validate(value) {
 			if (!value) return 'Version number is required';
 			if (!filteredVersions.includes(value))
