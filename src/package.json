@@ -1,6 +1,6 @@
 {
 	"name": "create-mcprofile",
-	"version": "0.0.27",
+	"version": "0.0.28",
 	"type": "module",
 	"module": "index.ts",
 	"bin": {
@@ -40,7 +40,7 @@
 		"prepare": "bun run build",
 		"prepublishOnly": "bun run build",
 		"prerelease": "cp ../README.md ./README.md",
-		"release": "npx standard-version && git push --follow-tags origin main && npm publish",
+		"release": "bunx standard-version && git push --follow-tags origin main && bun publish",
 		"postrelease": "rm README.md"
 	}
 }
